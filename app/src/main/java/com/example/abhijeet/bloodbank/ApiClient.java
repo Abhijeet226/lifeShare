@@ -27,7 +27,7 @@ import okhttp3.Response;
 
 public class ApiClient {
 
-    public static final String DEFAULT_BASE_URL = "http://172.28.183.190:5000/api";
+    public static final String DEFAULT_BASE_URL = "https://lifeshare-74c2.onrender.com/api";
     private static final String PREF_SERVER_URL = "custom_server_base_url";
     private static final String PREF_AUTH_TOKEN = "jwt_auth_token";
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
