@@ -73,9 +73,28 @@ async function findMatchingDonors(emergencyId, stageIndex = 0) {
     const existingResponses = await EmergencyResponse.find({ requestId: emergency._id }).select('donorId');
     const excludedDonorIds = existingResponses.map((r) => r.donorId);
 
-    // Exclude requester
+    // 1. Exclude requester by ID
     if (emergency.requester) {
       excludedDonorIds.push(emergency.requester);
+    }
+
+    // 2. Exclude requester by Email (postedBy)
+    if (emergency.postedBy && emergency.postedBy.includes('@')) {
+      const creatorByEmail = await User.findOne({ email: emergency.postedBy.toLowerCase().trim() }).select('_id');
+      if (creatorByEmail && !excludedDonorIds.some((id) => id.toString() === creatorByEmail._id.toString())) {
+        excludedDonorIds.push(creatorByEmail._id);
+      }
+    }
+
+    // 3. Exclude requester by Contact Phone Number
+    if (emergency.contactNumber) {
+      const cleanDigits = emergency.contactNumber.replace(/[^0-9]/g, '');
+      if (cleanDigits.length >= 10) {
+        const creatorByPhone = await User.findOne({ mobile: { $regex: cleanDigits.slice(-10) } }).select('_id');
+        if (creatorByPhone && !excludedDonorIds.some((id) => id.toString() === creatorByPhone._id.toString())) {
+          excludedDonorIds.push(creatorByPhone._id);
+        }
+      }
     }
 
     let candidates = [];

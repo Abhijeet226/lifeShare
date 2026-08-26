@@ -157,8 +157,21 @@ public class NotificationHelper {
         try {
             NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             if (manager != null) {
-                manager.notify((int) System.currentTimeMillis(), builder.build());
+                int notifId = (requestId != null && !requestId.isEmpty()) ? ("sos_" + requestId).hashCode() : 1001;
+                manager.notify(notifId, builder.build());
             }
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+    }
+
+    public static void markEmergencyAsSeen(Context context, String requestId) {
+        if (context == null || requestId == null || requestId.isEmpty()) return;
+        try {
+            SharedPreferences sp = context.getSharedPreferences(PREF_NOTIFICATIONS, Context.MODE_PRIVATE);
+            Set<String> seenIds = new HashSet<>(sp.getStringSet(KEY_SEEN_SOS_IDS, new HashSet<String>()));
+            seenIds.add(requestId);
+            sp.edit().putStringSet(KEY_SEEN_SOS_IDS, seenIds).apply();
         } catch (Throwable t) {
             t.printStackTrace();
         }
@@ -167,10 +180,18 @@ public class NotificationHelper {
     public static void checkAndNotifyNewEmergencies(Context context, List<EmergencyRequest> requests, UserProfile currentUser) {
         if (context == null || requests == null || requests.isEmpty()) return;
 
+        // 1. Guardrail: If user is unavailable or under 90-day cooldown, suppress emergency alerts
+        if (currentUser != null) {
+            if (!currentUser.isAvailable() || !currentUser.isEligibleToDonate() || currentUser.getDaysRemaining() > 0) {
+                return;
+            }
+        }
+
         SharedPreferences sp = context.getSharedPreferences(PREF_NOTIFICATIONS, Context.MODE_PRIVATE);
         Set<String> seenIds = new HashSet<>(sp.getStringSet(KEY_SEEN_SOS_IDS, new HashSet<String>()));
         boolean hasNew = false;
 
+        String userId = (currentUser != null && currentUser.getId() != null) ? currentUser.getId().trim() : "";
         String userCity = (currentUser != null && currentUser.getCity() != null) ? currentUser.getCity().trim() : "";
         String userEmail = (currentUser != null && currentUser.getEmail() != null) ? currentUser.getEmail().trim() : "";
         String userMobile = (currentUser != null && currentUser.getMobile() != null) ? currentUser.getMobile().trim().replaceAll("[^0-9]", "") : "";
@@ -183,23 +204,26 @@ public class NotificationHelper {
                 seenIds.add(req.getId());
                 hasNew = true;
 
-                // Don't alert the poster for their own SOS
+                // Robust Multi-Factor Self-Exclusion Check
                 String contactNum = req.getContactNumber() != null ? req.getContactNumber().replaceAll("[^0-9]", "") : "";
-                boolean isSelf = (!userEmail.isEmpty() && req.getPostedBy() != null && userEmail.equalsIgnoreCase(req.getPostedBy()))
-                        || (!userMobile.isEmpty() && !contactNum.isEmpty() && userMobile.equals(contactNum));
+                String reqPostedBy = req.getPostedBy() != null ? req.getPostedBy().trim() : "";
+
+                boolean isSelf = (!userId.isEmpty() && userId.equalsIgnoreCase(reqPostedBy))
+                        || (!userEmail.isEmpty() && userEmail.equalsIgnoreCase(reqPostedBy))
+                        || (!userMobile.isEmpty() && !contactNum.isEmpty() && (userMobile.endsWith(contactNum) || contactNum.endsWith(userMobile)));
 
                 if (!isSelf) {
                     String reqCity = req.getCity() != null ? req.getCity() : "";
                     String reqHospital = req.getHospital() != null ? req.getHospital() : "";
                     String reqBlood = req.getBloodGroup() != null ? req.getBloodGroup() : "";
 
-                    // 1. Area / Location Match
+                    // Location / Area Matching: matches user's city or hospital name includes city
                     boolean matchesArea = userCity.isEmpty()
                             || reqCity.isEmpty()
                             || reqCity.equalsIgnoreCase(userCity)
                             || reqHospital.toLowerCase().contains(userCity.toLowerCase());
 
-                    // 2. Blood Group Compatibility Match
+                    // Transfusion Compatibility Check
                     boolean isCompatible = isBloodCompatible(userBlood, reqBlood);
                     boolean isDirectMatch = !userBlood.isEmpty() && userBlood.equalsIgnoreCase(reqBlood);
 
@@ -351,7 +375,11 @@ public class NotificationHelper {
         try {
             NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             if (manager != null) {
-                manager.notify((int) System.currentTimeMillis(), builder.build());
+                String notifKey = (requestId != null && !requestId.isEmpty())
+                        ? ("fcm_" + requestId)
+                        : ((certificateId != null && !certificateId.isEmpty()) ? ("fcm_cert_" + certificateId) : ("fcm_type_" + type));
+                int notifId = notifKey.hashCode();
+                manager.notify(notifId, builder.build());
             }
         } catch (Throwable t) {
             t.printStackTrace();

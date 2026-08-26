@@ -55,7 +55,10 @@ async function sendToUser(userId, { title, body, data = {}, notificationType = '
     console.log(`🔔 [PUSH NOTIFICATION DISPATCH] User: ${userId} | Type: ${notificationType} | Title: "${title}"`);
 
     if (admin) {
-      const registrationTokens = tokens.map((t) => t.token);
+      const registrationTokens = Array.from(new Set(tokens.map((t) => t.token))).filter(Boolean);
+      if (registrationTokens.length === 0) {
+        return { success: false, reason: 'No valid registration tokens' };
+      }
       const response = await admin.messaging().sendEachForMulticast({
         tokens: registrationTokens,
         ...payload

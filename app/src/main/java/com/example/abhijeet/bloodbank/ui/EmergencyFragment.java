@@ -539,10 +539,8 @@ public class EmergencyFragment extends Fragment {
                     @Override
                     public void onSuccess() {
                         if (getContext() != null) {
-                            Toast.makeText(getContext(), "Emergency SOS Broadcasted successfully! Finding nearby matching donors...", Toast.LENGTH_LONG).show();
-                            NotificationHelper.showEmergencySosNotification(
-                                    getContext(), finalPatient, finalHospital, finalCity, finalBg, finalUnits, finalContact
-                            );
+                            Toast.makeText(getContext(), "Emergency SOS Broadcasted successfully! Matching donors are being alerted...", Toast.LENGTH_LONG).show();
+                            NotificationHelper.markEmergencyAsSeen(getContext(), newReq.getId());
                         }
                         dialog.dismiss();
                         loadRequests();
