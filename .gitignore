@@ -1,0 +1,15 @@
+*.iml
+.gradle
+/local.properties
+/.idea/
+.DS_Store
+/build
+app/build/
+/captures
+.externalNativeBuild
+.cxx/
+backend/node_modules/
+backend/.env
+backend/config/serviceAccountKey.json
+node_modules/
+

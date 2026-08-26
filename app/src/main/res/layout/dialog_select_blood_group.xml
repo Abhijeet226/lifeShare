@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="320dp"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    app:cardBackgroundColor="?attr/colorSurfaceContainer"
+    app:cardCornerRadius="28dp"
+    app:cardElevation="0dp"
+    app:strokeColor="?attr/colorOutlineVariant"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="22dp">
+
+        <!-- Header Section with Blood Drop Bubble -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <FrameLayout
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_icon_bubble">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_blood_drop"
+                    app:tint="?attr/colorPrimary" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Select Blood Group"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Choose your verified blood type"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <com.google.android.material.divider.MaterialDivider
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="16dp"
+            app:dividerColor="?attr/colorOutlineVariant" />
+
+        <!-- Scrollable Blood Group Options -->
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="260dp"
+            android:overScrollMode="never">
+
+            <RadioGroup
+                android:id="@+id/rg_dialog_blood_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <RadioButton
+                    android:id="@+id/rb_bg_o_pos"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingVertical="8dp"
+                    android:tag="O+"
+                    android:text="O+ (Universal Donor Red Cells)"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_bg_o_neg"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:paddingVertical="8dp"
+                    android:tag="O-"
+                    android:text="O- (Universal Emergency Donor)"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_bg_a_pos"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:paddingVertical="8dp"
+                    android:tag="A+"
+                    android:text="A+ (A Positive)"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_bg_a_neg"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:paddingVertical="8dp"
+                    android:tag="A-"
+                    android:text="A- (A Negative)"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_bg_b_pos"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:paddingVertical="8dp"
+                    android:tag="B+"
+                    android:text="B+ (B Positive)"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_bg_b_neg"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:paddingVertical="8dp"
+                    android:tag="B-"
+                    android:text="B- (B Negative)"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_bg_ab_pos"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:paddingVertical="8dp"
+                    android:tag="AB+"
+                    android:text="AB+ (Universal Recipient)"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_bg_ab_neg"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:paddingVertical="8dp"
+                    android:tag="AB-"
+                    android:text="AB- (AB Negative)"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="14sp" />
+            </RadioGroup>
+        </androidx.core.widget.NestedScrollView>
+
+        <!-- Action Button Row with only Cancel -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="end|center_vertical"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_dialog_bg_cancel"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:text="Cancel"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

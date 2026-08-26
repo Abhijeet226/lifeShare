@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand Crimson / Blood Red Palette in Dark Mode -->
+    <color name="colorPrimary">#EF5350</color>
+    <color name="colorPrimaryDark">#B71C1C</color>
+    <color name="colorPrimaryLight">#FF867C</color>
+    <color name="colorAccent">#E53935</color>
+    <color name="colorSecondary">#E57373</color>
+
+    <!-- Material 3 Tonal Surfaces & Backgrounds (Dark Mode OLED) -->
+    <color name="background_color">#0F172A</color>
+    <color name="surface_color">#1E293B</color>
+    <color name="statusbar_color">#0F172A</color>
+    <color name="card_background">#1E293B</color>
+    <color name="card_stroke">#334155</color>
+    <color name="surface_container_lowest">#090D16</color>
+    <color name="surface_container_low">#0F172A</color>
+    <color name="surface_container">#1E293B</color>
+    <color name="surface_container_high">#334155</color>
+    <color name="surface_container_highest">#475569</color>
+
+    <!-- Status & Action Colors -->
+    <color name="status_available">#4CAF50</color>
+    <color name="status_available_bg">#1B3820</color>
+    <color name="status_busy">#EF5350</color>
+    <color name="status_busy_bg">#3E1B1B</color>
+    <color name="whatsapp_green">#25D366</color>
+    <color name="call_blue">#64B5F6</color>
+    <color name="sms_orange">#FFB74D</color>
+
+    <!-- Neutral & Typography -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="text_primary">#F8FAFC</color>
+    <color name="text_secondary">#94A3B8</color>
+    <color name="text_hint">#64748B</color>
+    <color name="white_greyish">#1E293B</color>
+    <color name="button_selectorcolor">#64748B</color>
+
+    <!-- Modern LifeShare V3 Design System Tokens -->
+    <color name="emergency_red_primary">#EF5350</color>
+    <color name="emergency_red_dark">#C62828</color>
+    <color name="emergency_red_light">#3E1B1B</color>
+    <color name="emergency_red_gradient_start">#EF5350</color>
+    <color name="emergency_red_gradient_end">#C62828</color>
+
+    <color name="verified_green">#4CAF50</color>
+    <color name="verified_green_bg">#1B3820</color>
+    <color name="verified_green_border">#2E7D32</color>
+
+    <color name="cooldown_orange">#FF9800</color>
+    <color name="cooldown_orange_bg">#3E271B</color>
+    <color name="cooldown_orange_border">#E65100</color>
+
+    <color name="hospital_teal">#26A69A</color>
+    <color name="hospital_teal_bg">#143834</color>
+    <color name="hospital_teal_border">#00897B</color>
+
+    <color name="nav_active">#EF5350</color>
+    <color name="nav_active_bg">#3E1B1B</color>
+    <color name="nav_inactive">#64748B</color>
+
+    <color name="surface_elevated">#1E293B</color>
+    <color name="surface_subtle">#0F172A</color>
+    <color name="divider_subtle">#334155</color>
+    <color name="border_subtle">#334155</color>
+    <color name="ripple_light">#33FFFFFF</color>
+
+    <!-- Action Button Pastel Backgrounds (Night / OLED) -->
+    <color name="call_action_bg">#1E3A5F</color>
+    <color name="sms_action_bg">#4A2E10</color>
+    <color name="whatsapp_action_bg">#1B3820</color>
+    <color name="profile_action_bg">#3E1B1B</color>
+    <color name="share_action_bg">#3E1B1B</color>
+    <color name="circular_action_icon_bg">#334155</color>
+    <color name="segmented_pill_bg">#1E293B</color>
+    <color name="segmented_unselected_bg">#0F172A</color>
+
+    <!-- Multi-Colored Categorized Menu & Settings Icons (Dark) -->
+    <color name="icon_personal_info">#90CAF9</color>
+    <color name="icon_security">#FFB74D</color>
+    <color name="icon_theme">#80CBC4</color>
+    <color name="icon_medical_centers">#EF5350</color>
+    <color name="icon_feedback">#90A4AE</color>
+    <color name="icon_destructive">#EF5350</color>
+</resources>

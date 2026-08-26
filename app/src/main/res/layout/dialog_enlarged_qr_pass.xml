@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="320dp"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:background="@drawable/bg_grouped_container"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <!-- Pass Title -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Digital Donor Pass"
+        android:textColor="@color/text_primary"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tv_dialog_donor_sub"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="LifeShare Voluntary Blood Network • Odisha"
+        android:textColor="@color/text_secondary"
+        android:textSize="12sp" />
+
+    <!-- Pure White QR Container -->
+    <FrameLayout
+        android:layout_width="210dp"
+        android:layout_height="210dp"
+        android:layout_marginTop="18dp"
+        android:background="@drawable/bg_qr_white_card"
+        android:padding="12dp">
+
+        <ImageView
+            android:id="@+id/iv_dialog_enlarged_qr"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#FFFFFF"
+            android:contentDescription="Enlarged QR Code"
+            android:scaleType="fitCenter" />
+    </FrameLayout>
+
+    <!-- Pass Info Details -->
+    <TextView
+        android:id="@+id/tv_dialog_donor_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Abhijeet Pradhan"
+        android:textColor="@color/text_primary"
+        android:textSize="17sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tv_dialog_donor_id"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="Donor ID: OD-LS-982011 • O+ • Bhubaneswar"
+        android:textColor="@color/colorPrimary"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center"
+        android:text="Hospital staff and blood bank coordinators can scan this QR code for instant voluntary donor verification."
+        android:textColor="@color/text_secondary"
+        android:textSize="11sp" />
+
+    <!-- Close Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_close_dialog_qr"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/bg_gradient_button"
+        android:text="Done"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        app:backgroundTint="@null"
+        app:cornerRadius="24dp" />
+
+</LinearLayout>
