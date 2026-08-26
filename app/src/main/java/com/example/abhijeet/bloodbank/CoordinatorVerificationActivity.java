@@ -86,7 +86,38 @@ public class CoordinatorVerificationActivity extends AppCompatActivity {
         initViews();
         setupListeners();
         setupScrollAutoHide();
+        handleIncomingIntent(getIntent());
         loadAllData();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleIncomingIntent(intent);
+        switchTab(currentTab);
+    }
+
+    private void handleIncomingIntent(Intent intent) {
+        if (intent == null) return;
+
+        String targetTab = intent.getStringExtra("tab");
+        if (targetTab == null && intent.getData() != null) {
+            targetTab = intent.getData().getQueryParameter("tab");
+        }
+
+        if ("emergencies".equalsIgnoreCase(targetTab)) {
+            currentTab = CoordTab.EMERGENCIES;
+        } else if ("history".equalsIgnoreCase(targetTab)) {
+            currentTab = CoordTab.HISTORY;
+        } else {
+            currentTab = CoordTab.QUEUE;
+        }
+
+        String donorName = intent.getStringExtra("donor_name");
+        if (donorName != null && !donorName.isEmpty()) {
+            Toast.makeText(this, "Donor Arrived: " + donorName, Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override

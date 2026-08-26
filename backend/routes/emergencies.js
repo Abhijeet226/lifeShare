@@ -526,6 +526,39 @@ const handleEmergencyJourneyAction = async (req, res) => {
       if (!record.arrivedAt) record.arrivedAt = new Date();
       await record.save();
 
+      // Notify Assigned Hospital Coordinators
+      try {
+        let coordinatorQuery = { role: 'COORDINATOR', accountStatus: 'ACTIVE' };
+        if (emergency.hospitalId && mongoose.Types.ObjectId.isValid(emergency.hospitalId)) {
+          coordinatorQuery.hospitalId = emergency.hospitalId;
+        }
+        let coordinators = await User.find(coordinatorQuery);
+        if (!coordinators || coordinators.length === 0) {
+          coordinators = await User.find({ role: 'COORDINATOR', accountStatus: 'ACTIVE' });
+        }
+
+        for (const coord of coordinators) {
+          notificationService.sendToUser(coord._id, {
+            title: `🩸 Donor Arrived: ${donor.name || 'Donor'} (${donor.bloodGroup || emergency.bloodGroup})`,
+            body: `${donor.name || 'A donor'} has arrived at ${emergency.hospital} for patient ${emergency.patientName}. Tap to verify donation.`,
+            data: {
+              notificationType: 'DONOR_ARRIVED',
+              requestId: String(emergency._id),
+              responseId: String(record._id),
+              donorId: String(donor._id),
+              donorName: donor.name || 'Donor',
+              bloodGroup: donor.bloodGroup || emergency.bloodGroup,
+              patientName: emergency.patientName,
+              hospital: emergency.hospital,
+              targetScreen: 'COORDINATOR_VERIFICATION'
+            },
+            notificationType: 'DONOR_ARRIVED'
+          });
+        }
+      } catch (notifyErr) {
+        console.warn('⚠️ Could not notify coordinators on donor arrival:', notifyErr.message);
+      }
+
       return res.json({
         success: true,
         message: 'Arrival at hospital confirmed. Awaiting authorized donation verification.',

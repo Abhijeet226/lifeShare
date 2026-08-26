@@ -65,7 +65,20 @@ public class NotificationHelper {
             int unitsNeeded,
             String contactPhone
     ) {
-        showEmergencySosNotification(context, patientName, hospital, city, bloodGroup, unitsNeeded, contactPhone, false);
+        showEmergencySosNotification(context, patientName, hospital, city, bloodGroup, unitsNeeded, contactPhone, false, null);
+    }
+
+    public static void showEmergencySosNotification(
+            Context context,
+            String patientName,
+            String hospital,
+            String city,
+            String bloodGroup,
+            int unitsNeeded,
+            String contactPhone,
+            String requestId
+    ) {
+        showEmergencySosNotification(context, patientName, hospital, city, bloodGroup, unitsNeeded, contactPhone, false, requestId);
     }
 
     public static void showEmergencySosNotification(
@@ -78,10 +91,32 @@ public class NotificationHelper {
             String contactPhone,
             boolean isDirectBloodMatch
     ) {
+        showEmergencySosNotification(context, patientName, hospital, city, bloodGroup, unitsNeeded, contactPhone, isDirectBloodMatch, null);
+    }
+
+    public static void showEmergencySosNotification(
+            Context context,
+            String patientName,
+            String hospital,
+            String city,
+            String bloodGroup,
+            int unitsNeeded,
+            String contactPhone,
+            boolean isDirectBloodMatch,
+            String requestId
+    ) {
         createNotificationChannels(context);
 
-        Intent openAppIntent = new Intent(context, LogInActivity.class);
+        Intent openAppIntent;
+        if (requestId != null && !requestId.isEmpty()) {
+            openAppIntent = new Intent(context, EmergencyDetailActivity.class);
+            openAppIntent.putExtra("emergency_id", requestId);
+            openAppIntent.setData(Uri.parse("lifeshare://emergency/" + requestId));
+        } else {
+            openAppIntent = new Intent(context, LogInActivity.class);
+        }
         openAppIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
         PendingIntent contentPendingIntent = PendingIntent.getActivity(
                 context, 101, openAppIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
@@ -106,7 +141,7 @@ public class NotificationHelper {
                 .setSmallIcon(R.drawable.ic_nav_emergency)
                 .setContentTitle(title)
                 .setContentText(content)
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(content + "\nTap to respond immediately or contact hospital coordinator."))
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(content + "\nTap to view details and respond immediately."))
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setColor(Color.parseColor("#C62828"))
@@ -117,7 +152,7 @@ public class NotificationHelper {
         if (callPendingIntent != null) {
             builder.addAction(R.drawable.ic_call, "Call Coordinator", callPendingIntent);
         }
-        builder.addAction(R.drawable.ic_nav_emergency, "View SOS Hub", contentPendingIntent);
+        builder.addAction(R.drawable.ic_nav_emergency, "View SOS Details", contentPendingIntent);
 
         try {
             NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -177,7 +212,8 @@ public class NotificationHelper {
                                 reqBlood,
                                 req.getUnitsNeeded(),
                                 req.getContactNumber() != null ? req.getContactNumber() : "",
-                                isDirectMatch
+                                isDirectMatch,
+                                req.getId()
                         );
                     }
                 }
@@ -233,7 +269,7 @@ public class NotificationHelper {
             String notificationType,
             String requestId
     ) {
-        showFcmPushNotification(context, title, message, notificationType, requestId, null);
+        showFcmPushNotification(context, title, message, notificationType, requestId, null, null);
     }
 
     public static void showFcmPushNotification(
@@ -244,19 +280,52 @@ public class NotificationHelper {
             String requestId,
             String certificateId
     ) {
+        showFcmPushNotification(context, title, message, notificationType, requestId, certificateId, null);
+    }
+
+    public static void showFcmPushNotification(
+            Context context,
+            String title,
+            String message,
+            String notificationType,
+            String requestId,
+            String certificateId,
+            java.util.Map<String, String> extraData
+    ) {
         createNotificationChannels(context);
 
         Intent intent;
-        if ("DONATION_VERIFIED".equalsIgnoreCase(notificationType)) {
+        String type = notificationType != null ? notificationType.toUpperCase() : "GENERAL";
+
+        if ("DONATION_VERIFIED".equals(type) || "CERTIFICATE_ISSUED".equals(type)) {
             if (certificateId != null && !certificateId.isEmpty()) {
                 intent = new Intent(context, DonationCertificateActivity.class);
                 intent.putExtra("certificate_id", certificateId);
+                intent.setData(Uri.parse("lifeshare://certificate/" + certificateId));
             } else {
                 intent = new Intent(context, DonationHistoryActivity.class);
+                intent.setData(Uri.parse("lifeshare://history"));
             }
+        } else if ("DONOR_ARRIVED".equals(type) || "DONOR_REACHED".equals(type) || "COORDINATOR_ALERT".equals(type) || "DONATION_PENDING".equals(type)) {
+            intent = new Intent(context, CoordinatorVerificationActivity.class);
+            intent.putExtra("tab", "queue");
+            if (extraData != null) {
+                if (extraData.containsKey("donorId")) intent.putExtra("donor_id", extraData.get("donorId"));
+                if (extraData.containsKey("donorName")) intent.putExtra("donor_name", extraData.get("donorName"));
+                if (extraData.containsKey("responseId")) intent.putExtra("response_id", extraData.get("responseId"));
+                if (extraData.containsKey("requestId")) intent.putExtra("request_id", extraData.get("requestId"));
+            }
+            intent.setData(Uri.parse("lifeshare://coordinator?tab=queue"));
+        } else if ("COORDINATOR_ONBOARDED".equals(type) || "COORDINATOR_ASSIGNED".equals(type)) {
+            intent = new Intent(context, CoordinatorVerificationActivity.class);
+            intent.setData(Uri.parse("lifeshare://coordinator"));
+        } else if ("ADMIN_ALERT".equals(type)) {
+            intent = new Intent(context, AdminDashboardActivity.class);
+            intent.setData(Uri.parse("lifeshare://admin"));
         } else if (requestId != null && !requestId.isEmpty()) {
             intent = new Intent(context, EmergencyDetailActivity.class);
             intent.putExtra("emergency_id", requestId);
+            intent.setData(Uri.parse("lifeshare://emergency/" + requestId));
         } else {
             intent = new Intent(context, LogInActivity.class);
         }
@@ -266,14 +335,14 @@ public class NotificationHelper {
                 context, (int) System.currentTimeMillis(), intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
-        String channelId = "EMERGENCY_REQUEST".equals(notificationType) ? CHANNEL_EMERGENCY_ID : CHANNEL_GENERAL_ID;
+        String channelId = ("EMERGENCY_REQUEST".equals(type) || "DONOR_ARRIVED".equals(type)) ? CHANNEL_EMERGENCY_ID : CHANNEL_GENERAL_ID;
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId)
                 .setSmallIcon(R.drawable.ic_nav_emergency)
                 .setContentTitle(title)
                 .setContentText(message)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
-                .setPriority("EMERGENCY_REQUEST".equals(notificationType) ? NotificationCompat.PRIORITY_MAX : NotificationCompat.PRIORITY_DEFAULT)
+                .setPriority(("EMERGENCY_REQUEST".equals(type) || "DONOR_ARRIVED".equals(type)) ? NotificationCompat.PRIORITY_MAX : NotificationCompat.PRIORITY_DEFAULT)
                 .setColor(Color.parseColor("#C62828"))
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent)

@@ -29,7 +29,21 @@ public class DonationCertificateActivity extends AppCompatActivity {
         apiClient = ApiClient.getInstance();
         apiClient.initFromPrefs(this);
 
-        certificateId = getIntent().getStringExtra("certificate_id");
+        if (getIntent().getData() != null) {
+            android.net.Uri data = getIntent().getData();
+            String queryId = data.getQueryParameter("id");
+            if (queryId != null && !queryId.isEmpty()) {
+                certificateId = queryId;
+            } else if (data.getLastPathSegment() != null && !data.getLastPathSegment().isEmpty() && !"certificate".equalsIgnoreCase(data.getLastPathSegment())) {
+                certificateId = data.getLastPathSegment();
+            }
+        }
+        if (certificateId == null || certificateId.isEmpty()) {
+            certificateId = getIntent().getStringExtra("certificate_id");
+        }
+        if (certificateId == null || certificateId.isEmpty()) {
+            certificateId = getIntent().getStringExtra("certificateId");
+        }
 
         tvCertId = findViewById(R.id.tv_cert_id);
         tvDonorName = findViewById(R.id.tv_cert_donor_name);

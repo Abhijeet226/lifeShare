@@ -57,13 +57,17 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         if (title == null || title.isEmpty()) {
             if ("EMERGENCY_REQUEST".equals(notificationType)) {
-                title = "Urgent " + bloodGroup + " Blood Needed!";
+                title = "🚨 Urgent " + bloodGroup + " Blood Needed!";
                 body = "Critical need for " + units + " unit(s) at " + hospital + ". Tap to respond.";
+            } else if ("DONOR_ARRIVED".equals(notificationType)) {
+                String donorName = data.containsKey("donorName") ? data.get("donorName") : "Donor";
+                title = "🩸 Donor Arrived: " + donorName;
+                body = donorName + " has arrived at " + hospital + " to donate blood. Tap to verify.";
             } else if ("DONOR_RESPONSE".equals(notificationType)) {
-                title = "Donor Responded!";
+                title = "🩸 Donor Accepted Blood Request!";
                 body = "A voluntary donor has responded to your emergency request at " + hospital + ".";
             } else if ("DONATION_VERIFIED".equals(notificationType)) {
-                title = "Blood Donation Verified!";
+                title = "🎉 Blood Donation Certified!";
                 body = "Your voluntary blood donation at " + hospital + " has been certified. Tap to view certificate.";
             } else {
                 title = "LifeShare Notification";
@@ -77,7 +81,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 body,
                 notificationType,
                 requestId,
-                certificateId
+                certificateId,
+                data
         );
     }
 }

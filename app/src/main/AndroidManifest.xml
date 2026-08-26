@@ -93,12 +93,19 @@
         <activity
             android:name=".EmergencyDetailActivity"
             android:exported="true"
-            android:parentActivityName=".LogInActivity">
-            <intent-filter>
+            android:parentActivityName=".MainActivity">
+            <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="lifeshare" android:host="emergency" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="lifeshare.odisha.gov.in" android:pathPrefix="/emergency" />
+                <data android:scheme="https" android:host="lifeshare-74c2.onrender.com" android:pathPrefix="/emergency" />
             </intent-filter>
         </activity>
 
@@ -106,28 +113,57 @@
             android:name=".DonationHistoryActivity"
             android:exported="true"
             android:parentActivityName=".MainActivity">
-            <intent-filter>
+            <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="lifeshare" android:host="history" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="lifeshare.odisha.gov.in" android:pathPrefix="/history" />
+                <data android:scheme="https" android:host="lifeshare-74c2.onrender.com" android:pathPrefix="/history" />
             </intent-filter>
         </activity>
 
         <activity
             android:name=".DonationCertificateActivity"
             android:exported="true"
-            android:parentActivityName=".DonationHistoryActivity" />
+            android:parentActivityName=".DonationHistoryActivity">
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="lifeshare" android:host="certificate" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="lifeshare.odisha.gov.in" android:pathPrefix="/certificate" />
+                <data android:scheme="https" android:host="lifeshare-74c2.onrender.com" android:pathPrefix="/certificate" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".CoordinatorVerificationActivity"
             android:exported="true"
             android:parentActivityName=".MainActivity">
-            <intent-filter>
+            <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="lifeshare" android:host="verify" />
+                <data android:scheme="lifeshare" android:host="coordinator" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="lifeshare.odisha.gov.in" android:pathPrefix="/coordinator" />
+                <data android:scheme="https" android:host="lifeshare-74c2.onrender.com" android:pathPrefix="/coordinator" />
             </intent-filter>
         </activity>
 
@@ -135,11 +171,18 @@
             android:name=".AdminDashboardActivity"
             android:exported="true"
             android:parentActivityName=".MainActivity">
-            <intent-filter>
+            <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="lifeshare" android:host="admin" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="lifeshare.odisha.gov.in" android:pathPrefix="/admin" />
+                <data android:scheme="https" android:host="lifeshare-74c2.onrender.com" android:pathPrefix="/admin" />
             </intent-filter>
         </activity>
 

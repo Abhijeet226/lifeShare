@@ -71,13 +71,22 @@ public class EmergencyDetailActivity extends AppCompatActivity {
         }
 
         if (getIntent().getData() != null) {
-            String queryId = getIntent().getData().getQueryParameter("id");
+            android.net.Uri data = getIntent().getData();
+            String queryId = data.getQueryParameter("id");
             if (queryId != null && !queryId.isEmpty()) {
                 emergencyId = queryId;
+            } else if (data.getLastPathSegment() != null && !data.getLastPathSegment().isEmpty() && !"emergency".equalsIgnoreCase(data.getLastPathSegment())) {
+                emergencyId = data.getLastPathSegment();
             }
         }
         if (emergencyId == null || emergencyId.isEmpty()) {
             emergencyId = getIntent().getStringExtra("emergency_id");
+        }
+        if (emergencyId == null || emergencyId.isEmpty()) {
+            emergencyId = getIntent().getStringExtra("requestId");
+        }
+        if (emergencyId == null || emergencyId.isEmpty()) {
+            emergencyId = getIntent().getStringExtra("request_id");
         }
         if (emergencyId == null || emergencyId.isEmpty()) {
             Toast.makeText(this, "Emergency request ID not found", Toast.LENGTH_SHORT).show();
