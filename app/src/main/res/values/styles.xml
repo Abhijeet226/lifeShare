@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Base application theme with automatic DayNight system dark mode. -->
     <style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
@@ -19,9 +19,12 @@
         <item name="colorOutline">@color/color_outline</item>
         <item name="colorOutlineVariant">@color/color_outline_variant</item>
         <item name="colorError">@color/color_error</item>
-        <item name="colorOnError">@color/color_on_error</item>
+        <!-- Edge-to-edge system bar drawing -->
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:enforceStatusBarContrast" tools:targetApi="q">false</item>
+        <item name="android:enforceNavigationBarContrast" tools:targetApi="q">false</item>
         <item name="android:windowBackground">@color/color_background</item>
     </style>
 
