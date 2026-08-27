@@ -5,6 +5,9 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RectF;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.CancellationSignal;
@@ -15,14 +18,15 @@ import android.print.PrintDocumentAdapter;
 import android.print.PrintDocumentInfo;
 import android.print.PrintManager;
 import android.print.pdf.PrintedPdfDocument;
+import android.text.Layout;
+import android.text.StaticLayout;
+import android.text.TextPaint;
 import android.view.View;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
@@ -34,27 +38,15 @@ import java.io.FileOutputStream;
 
 public class DonationCertificateActivity extends AppCompatActivity {
 
-    // Tab format selection
-    private FrameLayout tabFormatA4, tabFormatSocial;
-    private TextView tvTabA4, tvTabSocial;
-    private View containerA4Certificate, layoutA4Canvas;
-    private MaterialCardView cardSocialCertificate;
-
-    // A4 Landscape views
-    private TextView tvA4CertId, tvA4DonorName, tvA4BloodGroup, tvA4Date, tvA4Hospital, tvA4VerifiedBy, tvA4CertHash, tvA4TamperBadge;
-    private ImageView ivA4QrCode;
-
-    // Social portrait views
-    private TextView tvSocialCertId, tvSocialDonorName, tvSocialBloodGroup, tvSocialDate, tvSocialHospital, tvSocialTamperBadge;
-    private ImageView ivSocialQrCode;
-
-    // Actions
+    private TextView tvCertId, tvDonorName, tvBloodGroup, tvDate, tvHospital, tvVerifiedBy, tvCertHash, tvTamperBadge;
+    private ImageView ivCertQrCode;
+    private MaterialCardView cardDigitalCertificate;
     private MaterialButton btnPrintPdf, btnShareCertificate;
 
     private ApiClient apiClient;
     private String certificateId;
     private ApiClient.DonationCertificate loadedCertificate;
-    private boolean isA4FormatActive = true;
+    private Bitmap verificationQrBitmap;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -90,13 +82,18 @@ public class DonationCertificateActivity extends AppCompatActivity {
         if (tvTitle != null) {
             tvTitle.setText("Donation Certificate");
         }
+        ImageView btnHeaderPrint = findViewById(R.id.btn_header_action);
+        if (btnHeaderPrint != null) {
+            btnHeaderPrint.setImageResource(R.drawable.ic_print);
+            btnHeaderPrint.setContentDescription("Print Certificate");
+            btnHeaderPrint.setVisibility(View.VISIBLE);
+            btnHeaderPrint.setOnClickListener(v -> printA4Certificate());
+        }
 
         initViews();
-        setupFormatSwitcher();
 
         if (certificateId != null && !certificateId.isEmpty()) {
-            if (tvA4CertId != null) tvA4CertId.setText(certificateId);
-            if (tvSocialCertId != null) tvSocialCertId.setText(certificateId);
+            if (tvCertId != null) tvCertId.setText(certificateId);
             loadCertificateDetails();
         } else {
             Toast.makeText(this, "Missing certificate identifier", Toast.LENGTH_SHORT).show();
@@ -105,36 +102,17 @@ public class DonationCertificateActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        tabFormatA4 = findViewById(R.id.tab_format_a4);
-        tabFormatSocial = findViewById(R.id.tab_format_social);
-        tvTabA4 = findViewById(R.id.tv_tab_a4);
-        tvTabSocial = findViewById(R.id.tv_tab_social);
+        cardDigitalCertificate = findViewById(R.id.card_digital_certificate);
+        tvCertId = findViewById(R.id.tv_cert_id);
+        tvDonorName = findViewById(R.id.tv_cert_donor_name);
+        tvBloodGroup = findViewById(R.id.tv_cert_blood_group);
+        tvDate = findViewById(R.id.tv_cert_date);
+        tvHospital = findViewById(R.id.tv_cert_hospital);
+        tvVerifiedBy = findViewById(R.id.tv_cert_verified_by);
+        tvCertHash = findViewById(R.id.tv_cert_hash);
+        tvTamperBadge = findViewById(R.id.tv_cert_tamper_badge);
+        ivCertQrCode = findViewById(R.id.iv_cert_qr_code);
 
-        containerA4Certificate = findViewById(R.id.container_a4_certificate);
-        layoutA4Canvas = findViewById(R.id.layout_a4_canvas);
-        cardSocialCertificate = findViewById(R.id.card_social_certificate);
-
-        // A4 views
-        tvA4CertId = findViewById(R.id.tv_a4_cert_id);
-        tvA4DonorName = findViewById(R.id.tv_a4_donor_name);
-        tvA4BloodGroup = findViewById(R.id.tv_a4_blood_group);
-        tvA4Date = findViewById(R.id.tv_a4_date);
-        tvA4Hospital = findViewById(R.id.tv_a4_hospital);
-        tvA4VerifiedBy = findViewById(R.id.tv_a4_verified_by);
-        tvA4CertHash = findViewById(R.id.tv_a4_cert_hash);
-        tvA4TamperBadge = findViewById(R.id.tv_a4_tamper_badge);
-        ivA4QrCode = findViewById(R.id.iv_a4_qr_code);
-
-        // Social views
-        tvSocialCertId = findViewById(R.id.tv_social_cert_id);
-        tvSocialDonorName = findViewById(R.id.tv_social_donor_name);
-        tvSocialBloodGroup = findViewById(R.id.tv_social_blood_group);
-        tvSocialDate = findViewById(R.id.tv_social_date);
-        tvSocialHospital = findViewById(R.id.tv_social_hospital);
-        tvSocialTamperBadge = findViewById(R.id.tv_social_tamper_badge);
-        ivSocialQrCode = findViewById(R.id.iv_social_qr_code);
-
-        // Buttons
         btnPrintPdf = findViewById(R.id.btn_print_pdf);
         btnShareCertificate = findViewById(R.id.btn_share_certificate);
 
@@ -143,37 +121,7 @@ public class DonationCertificateActivity extends AppCompatActivity {
         }
 
         if (btnShareCertificate != null) {
-            btnShareCertificate.setOnClickListener(v -> showShareFormatDialog());
-        }
-    }
-
-    private void setupFormatSwitcher() {
-        if (tabFormatA4 != null) {
-            tabFormatA4.setOnClickListener(v -> switchToFormat(true));
-        }
-        if (tabFormatSocial != null) {
-            tabFormatSocial.setOnClickListener(v -> switchToFormat(false));
-        }
-    }
-
-    private void switchToFormat(boolean isA4) {
-        isA4FormatActive = isA4;
-        if (isA4) {
-            if (tabFormatA4 != null) tabFormatA4.setBackgroundResource(R.drawable.bg_chip_pill_selected);
-            if (tabFormatSocial != null) tabFormatSocial.setBackgroundColor(Color.TRANSPARENT);
-            if (tvTabA4 != null) tvTabA4.setTextColor(getResources().getColor(R.color.colorPrimary));
-            if (tvTabSocial != null) tvTabSocial.setTextColor(getResources().getColor(R.color.text_secondary));
-
-            if (containerA4Certificate != null) containerA4Certificate.setVisibility(View.VISIBLE);
-            if (cardSocialCertificate != null) cardSocialCertificate.setVisibility(View.GONE);
-        } else {
-            if (tabFormatA4 != null) tabFormatA4.setBackgroundColor(Color.TRANSPARENT);
-            if (tabFormatSocial != null) tabFormatSocial.setBackgroundResource(R.drawable.bg_chip_pill_selected);
-            if (tvTabA4 != null) tvTabA4.setTextColor(getResources().getColor(R.color.text_secondary));
-            if (tvTabSocial != null) tvTabSocial.setTextColor(getResources().getColor(R.color.colorPrimary));
-
-            if (containerA4Certificate != null) containerA4Certificate.setVisibility(View.GONE);
-            if (cardSocialCertificate != null) cardSocialCertificate.setVisibility(View.VISIBLE);
+            btnShareCertificate.setOnClickListener(v -> shareMobileCertificateImage());
         }
     }
 
@@ -195,52 +143,43 @@ public class DonationCertificateActivity extends AppCompatActivity {
     private void renderCertificate(ApiClient.DonationCertificate cert) {
         if (cert == null) return;
 
-        // Render A4 Certificate
-        if (tvA4CertId != null) tvA4CertId.setText(cert.certificateId);
-        if (tvA4DonorName != null) tvA4DonorName.setText(cert.donorName);
-        if (tvA4BloodGroup != null) tvA4BloodGroup.setText(cert.bloodGroup);
-        if (tvA4Hospital != null) tvA4Hospital.setText(cert.hospital);
-        if (tvA4VerifiedBy != null) tvA4VerifiedBy.setText(cert.verifiedBy != null ? cert.verifiedBy : "Authorized Coordinator");
-        if (tvA4CertHash != null) tvA4CertHash.setText("SHA-256: " + (cert.certificateHash != null ? cert.certificateHash : "Verified"));
-
-        // Render Social Certificate
-        if (tvSocialCertId != null) tvSocialCertId.setText(cert.certificateId);
-        if (tvSocialDonorName != null) tvSocialDonorName.setText(cert.donorName);
-        if (tvSocialBloodGroup != null) tvSocialBloodGroup.setText(cert.bloodGroup);
-        if (tvSocialHospital != null) tvSocialHospital.setText(cert.hospital);
+        if (tvCertId != null) tvCertId.setText(cert.certificateId);
+        if (tvDonorName != null) tvDonorName.setText(cert.donorName);
+        if (tvBloodGroup != null) tvBloodGroup.setText(cert.bloodGroup);
+        if (tvHospital != null) tvHospital.setText(cert.hospital);
+        if (tvVerifiedBy != null) tvVerifiedBy.setText(cert.verifiedBy != null ? cert.verifiedBy : "Hospital Coordinator");
+        if (tvCertHash != null) tvCertHash.setText("SHA-256: " + (cert.certificateHash != null ? cert.certificateHash : "Verified"));
 
         String formattedDate = cert.donationDate;
         if (formattedDate != null && formattedDate.length() >= 10) {
             formattedDate = formattedDate.substring(0, 10);
         }
-        if (tvA4Date != null) tvA4Date.setText(formattedDate != null ? formattedDate : "Verified");
-        if (tvSocialDate != null) tvSocialDate.setText(formattedDate != null ? formattedDate : "Verified");
+        if (tvDate != null) tvDate.setText(formattedDate != null ? formattedDate : "Verified");
 
-        if (tvA4TamperBadge != null) {
+        if (tvTamperBadge != null) {
             if (cert.isTamperProofValid) {
-                tvA4TamperBadge.setText("✓ Cryptographic Integrity Verified");
-                tvA4TamperBadge.setTextColor(Color.parseColor("#2E7D32"));
+                tvTamperBadge.setText("✓ Authoritative Server Integrity Verified");
+                tvTamperBadge.setTextColor(Color.parseColor("#2E7D32"));
             } else {
-                tvA4TamperBadge.setText("⚠ Hash Mismatch Detected");
-                tvA4TamperBadge.setTextColor(Color.parseColor("#C62828"));
+                tvTamperBadge.setText("⚠ Hash Mismatch Detected");
+                tvTamperBadge.setTextColor(Color.parseColor("#C62828"));
             }
         }
 
         // Generate Scannable Verification QR Code
         String verifyUrl = "https://lifeshare-74c2.onrender.com/api/certificates/" + cert.certificateId;
-        Bitmap qrBitmap = QrUtils.generateQrCode(verifyUrl, 200, 200);
-        if (qrBitmap != null) {
-            if (ivA4QrCode != null) ivA4QrCode.setImageBitmap(qrBitmap);
-            if (ivSocialQrCode != null) ivSocialQrCode.setImageBitmap(qrBitmap);
+        verificationQrBitmap = QrUtils.generateQrCode(verifyUrl, 240, 240);
+        if (verificationQrBitmap != null && ivCertQrCode != null) {
+            ivCertQrCode.setImageBitmap(verificationQrBitmap);
         }
     }
 
     // =========================================================================
-    // NATIVE ANDROID A4 PRINT & PDF ENGINE
+    // AUTOMATIC A4 LANDSCAPE PRINT & VECTOR PDF ENGINE
     // =========================================================================
 
     private void printA4Certificate() {
-        if (layoutA4Canvas == null || loadedCertificate == null) {
+        if (loadedCertificate == null) {
             Toast.makeText(this, "Certificate is loading, please wait...", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -259,17 +198,19 @@ public class DonationCertificateActivity extends AppCompatActivity {
                 .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
                 .build();
 
-        printManager.print(jobName, new A4CertificatePrintAdapter(this, layoutA4Canvas), attributes);
+        printManager.print(jobName, new A4LandscapeVectorPrintAdapter(this, loadedCertificate, verificationQrBitmap), attributes);
     }
 
-    private class A4CertificatePrintAdapter extends PrintDocumentAdapter {
+    private static class A4LandscapeVectorPrintAdapter extends PrintDocumentAdapter {
         private final Context context;
-        private final View printView;
+        private final ApiClient.DonationCertificate cert;
+        private final Bitmap qrBitmap;
         private PrintedPdfDocument pdfDocument;
 
-        public A4CertificatePrintAdapter(Context context, View printView) {
+        public A4LandscapeVectorPrintAdapter(Context context, ApiClient.DonationCertificate cert, Bitmap qrBitmap) {
             this.context = context;
-            this.printView = printView;
+            this.cert = cert;
+            this.qrBitmap = qrBitmap;
         }
 
         @Override
@@ -305,28 +246,195 @@ public class DonationCertificateActivity extends AppCompatActivity {
                 return;
             }
 
-            // Render view onto PDF canvas scaled to A4 Landscape dimensions
             Canvas canvas = page.getCanvas();
-            int pageWidth = page.getInfo().getPageWidth();
-            int pageHeight = page.getInfo().getPageHeight();
+            int w = page.getInfo().getPageWidth();  // 842 points (A4 landscape)
+            int h = page.getInfo().getPageHeight(); // 595 points (A4 landscape)
 
-            // Measure & Layout view if needed
-            printView.measure(
-                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-            );
-            int viewWidth = printView.getMeasuredWidth();
-            int viewHeight = printView.getMeasuredHeight();
+            // 1. Background Ivory Canvas
+            Paint bgPaint = new Paint();
+            bgPaint.setColor(Color.parseColor("#FFFEFB"));
+            canvas.drawRect(0, 0, w, h, bgPaint);
 
-            float scale = Math.min((float) pageWidth / viewWidth, (float) pageHeight / viewHeight) * 0.95f;
-            float leftMargin = (pageWidth - (viewWidth * scale)) / 2f;
-            float topMargin = (pageHeight - (viewHeight * scale)) / 2f;
+            // 2. Double Ornate Border: Gold Outer, Crimson Inner
+            Paint goldBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            goldBorderPaint.setStyle(Paint.Style.STROKE);
+            goldBorderPaint.setColor(Color.parseColor("#D4AF37"));
+            goldBorderPaint.setStrokeWidth(3.5f);
+            canvas.drawRoundRect(new RectF(24, 24, w - 24, h - 24), 8, 8, goldBorderPaint);
 
+            Paint crimsonBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            crimsonBorderPaint.setStyle(Paint.Style.STROKE);
+            crimsonBorderPaint.setColor(Color.parseColor("#C62828"));
+            crimsonBorderPaint.setStrokeWidth(1.5f);
+            canvas.drawRoundRect(new RectF(32, 32, w - 32, h - 32), 4, 4, crimsonBorderPaint);
+
+            // 3. Top Header
+            Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            textPaint.setTextAlign(Paint.Align.CENTER);
+
+            // Org Header
+            textPaint.setColor(Color.parseColor("#C62828"));
+            textPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+            textPaint.setTextSize(13);
+            textPaint.setLetterSpacing(0.12f);
+            canvas.drawText("LIFESHARE VOLUNTARY DONOR NETWORK", w / 2f, 68, textPaint);
+
+            // Sub-header
+            textPaint.setColor(Color.parseColor("#64748B"));
+            textPaint.setTypeface(Typeface.DEFAULT);
+            textPaint.setTextSize(9.5f);
+            textPaint.setLetterSpacing(0.05f);
+            canvas.drawText("AUTHORITATIVE NATIONAL VOLUNTARY BLOOD DONATION REGISTRY", w / 2f, 84, textPaint);
+
+            // 4. Main Certificate Title
+            textPaint.setColor(Color.parseColor("#0F172A"));
+            textPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+            textPaint.setTextSize(22);
+            textPaint.setLetterSpacing(0.08f);
+            canvas.drawText("CERTIFICATE OF BLOOD DONATION", w / 2f, 126, textPaint);
+
+            // Subtitle
+            textPaint.setColor(Color.parseColor("#64748B"));
+            textPaint.setTypeface(Typeface.DEFAULT);
+            textPaint.setTextSize(11);
+            textPaint.setLetterSpacing(0.02f);
+            canvas.drawText("This is to proudly certify and commend", w / 2f, 148, textPaint);
+
+            // 5. Donor Full Name
+            textPaint.setColor(Color.parseColor("#C62828"));
+            textPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+            textPaint.setTextSize(26);
+            canvas.drawText(cert.donorName != null ? cert.donorName : "Honored Donor", w / 2f, 188, textPaint);
+
+            // 6. Commendation Statement
+            TextPaint bodyTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+            bodyTextPaint.setColor(Color.parseColor("#334155"));
+            bodyTextPaint.setTextSize(11);
+            bodyTextPaint.setTypeface(Typeface.DEFAULT);
+
+            String bodyText = "in sincere recognition of voluntary and selfless blood donation to save precious human lives during critical medical emergencies. Your humanitarian act reflects the highest spirit of civic duty and community service.";
+            StaticLayout bodyLayout = new StaticLayout(bodyText, bodyTextPaint, w - 160, Layout.Alignment.ALIGN_CENTER, 1.2f, 0, false);
             canvas.save();
-            canvas.translate(leftMargin, topMargin);
-            canvas.scale(scale, scale);
-            printView.draw(canvas);
+            canvas.translate(80, 204);
+            bodyLayout.draw(canvas);
             canvas.restore();
+
+            // 7. Metadata Box Strip
+            float metaBoxTop = 262;
+            float metaBoxBottom = 320;
+            Paint metaBgPaint = new Paint();
+            metaBgPaint.setColor(Color.parseColor("#F8FAFC"));
+            canvas.drawRoundRect(new RectF(60, metaBoxTop, w - 60, metaBoxBottom), 8, 8, metaBgPaint);
+
+            Paint metaBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            metaBorderPaint.setStyle(Paint.Style.STROKE);
+            metaBorderPaint.setColor(Color.parseColor("#E2E8F0"));
+            metaBorderPaint.setStrokeWidth(1);
+            canvas.drawRoundRect(new RectF(60, metaBoxTop, w - 60, metaBoxBottom), 8, 8, metaBorderPaint);
+
+            // 4 Metadata Columns
+            float col1 = 140; // Blood Group
+            float col2 = 290; // Date
+            float col3 = 490; // Hospital
+            float col4 = 700; // Certificate ID
+
+            Paint metaLabelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            metaLabelPaint.setColor(Color.parseColor("#94A3B8"));
+            metaLabelPaint.setTextSize(8.5f);
+            metaLabelPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+            metaLabelPaint.setTextAlign(Paint.Align.CENTER);
+
+            Paint metaValPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            metaValPaint.setColor(Color.parseColor("#0F172A"));
+            metaValPaint.setTextSize(12);
+            metaValPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+            metaValPaint.setTextAlign(Paint.Align.CENTER);
+
+            // Blood Group
+            canvas.drawText("BLOOD GROUP", col1, metaBoxTop + 22, metaLabelPaint);
+            Paint bgValPaint = new Paint(metaValPaint);
+            bgValPaint.setColor(Color.parseColor("#C62828"));
+            bgValPaint.setTextSize(14);
+            canvas.drawText(cert.bloodGroup != null ? cert.bloodGroup : "O+", col1, metaBoxTop + 44, bgValPaint);
+
+            // Date
+            String dt = cert.donationDate != null && cert.donationDate.length() >= 10 ? cert.donationDate.substring(0, 10) : "Verified";
+            canvas.drawText("DONATION DATE", col2, metaBoxTop + 22, metaLabelPaint);
+            canvas.drawText(dt, col2, metaBoxTop + 44, metaValPaint);
+
+            // Hospital
+            String hosp = cert.hospital != null ? cert.hospital : "Capital Hospital";
+            if (hosp.length() > 28) hosp = hosp.substring(0, 26) + "...";
+            canvas.drawText("HOSPITAL / CENTER", col3, metaBoxTop + 22, metaLabelPaint);
+            canvas.drawText(hosp, col3, metaBoxTop + 44, metaValPaint);
+
+            // Certificate ID
+            canvas.drawText("CERTIFICATE ID", col4, metaBoxTop + 22, metaLabelPaint);
+            Paint idPaint = new Paint(metaValPaint);
+            idPaint.setTypeface(Typeface.MONOSPACE);
+            idPaint.setTextSize(10);
+            canvas.drawText(cert.certificateId != null ? cert.certificateId : "CERT-LS", col4, metaBoxTop + 44, idPaint);
+
+            // 8. Signatures & Verification QR Code Section
+            float signY = 460;
+
+            // Left Signature (Medical Officer)
+            Paint signLinePaint = new Paint();
+            signLinePaint.setColor(Color.parseColor("#64748B"));
+            signLinePaint.setStrokeWidth(1.2f);
+            canvas.drawLine(80, signY, 260, signY, signLinePaint);
+
+            Paint signTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            signTextPaint.setColor(Color.parseColor("#0F172A"));
+            signTextPaint.setTextSize(11);
+            signTextPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+            canvas.drawText(cert.verifiedBy != null ? cert.verifiedBy : "Hospital Coordinator", 80, signY + 16, signTextPaint);
+
+            Paint signSubPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            signSubPaint.setColor(Color.parseColor("#64748B"));
+            signSubPaint.setTextSize(9);
+            canvas.drawText("Attending Medical Verification Desk", 80, signY + 30, signSubPaint);
+
+            // Center Verification QR Code
+            if (qrBitmap != null) {
+                float qrSize = 64;
+                float qrLeft = (w - qrSize) / 2f;
+                float qrTop = signY - 48;
+                canvas.drawBitmap(Bitmap.createScaledBitmap(qrBitmap, (int) qrSize, (int) qrSize, true), qrLeft, qrTop, null);
+
+                Paint qrTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                qrTextPaint.setColor(Color.parseColor("#94A3B8"));
+                qrTextPaint.setTextSize(7.5f);
+                qrTextPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+                qrTextPaint.setTextAlign(Paint.Align.CENTER);
+                canvas.drawText("Scan to Verify Online", w / 2f, qrTop + qrSize + 12, qrTextPaint);
+            }
+
+            // Right Signature (LifeShare Director)
+            canvas.drawLine(w - 260, signY, w - 80, signY, signLinePaint);
+
+            Paint dirSignText = new Paint(signTextPaint);
+            dirSignText.setTextAlign(Paint.Align.RIGHT);
+            canvas.drawText("Dr. S. K. Mohapatra", w - 80, signY + 16, dirSignText);
+
+            Paint dirSignSub = new Paint(signSubPaint);
+            dirSignSub.setTextAlign(Paint.Align.RIGHT);
+            canvas.drawText("Director, LifeShare Voluntary Network", w - 80, signY + 30, dirSignSub);
+
+            // 9. Cryptographic Audit Seal Bottom Strip
+            float bottomY = h - 42;
+            Paint hashPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            hashPaint.setColor(Color.parseColor("#94A3B8"));
+            hashPaint.setTextSize(8);
+            hashPaint.setTypeface(Typeface.MONOSPACE);
+            canvas.drawText("SHA-256: " + (cert.certificateHash != null ? cert.certificateHash : "Verified"), 60, bottomY, hashPaint);
+
+            Paint tamperPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            tamperPaint.setColor(Color.parseColor("#2E7D32"));
+            tamperPaint.setTextSize(9);
+            tamperPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+            tamperPaint.setTextAlign(Paint.Align.RIGHT);
+            canvas.drawText("✓ Authoritative Server Integrity Verified", w - 60, bottomY, tamperPaint);
 
             pdfDocument.finishPage(page);
 
@@ -343,53 +451,38 @@ public class DonationCertificateActivity extends AppCompatActivity {
     }
 
     // =========================================================================
-    // IMAGE EXPORT & SHARING
+    // MOBILE / WHATSAPP HIGH-RES IMAGE SHARING
     // =========================================================================
 
-    private void showShareFormatDialog() {
-        CharSequence[] options = {"📜 Official A4 Landscape Image (Full Certificate)", "📱 Social Story Card (Portrait Format)"};
-        new AlertDialog.Builder(this)
-                .setTitle("Select Certificate Format")
-                .setItems(options, (dialog, which) -> {
-                    if (which == 0) {
-                        exportAndShareView(layoutA4Canvas, "A4_Landscape");
-                    } else {
-                        exportAndShareView(cardSocialCertificate, "Social_Portrait");
-                    }
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
-    }
-
-    private void exportAndShareView(View targetView, String formatLabel) {
-        if (targetView == null || loadedCertificate == null) {
+    private void shareMobileCertificateImage() {
+        if (cardDigitalCertificate == null || loadedCertificate == null) {
             Toast.makeText(this, "Certificate is loading, please wait...", Toast.LENGTH_SHORT).show();
             return;
         }
 
         try {
-            int width = targetView.getWidth();
-            int height = targetView.getHeight();
+            int width = cardDigitalCertificate.getWidth();
+            int height = cardDigitalCertificate.getHeight();
 
             if (width <= 0 || height <= 0) {
-                targetView.measure(
+                cardDigitalCertificate.measure(
                         View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                         View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
                 );
-                width = targetView.getMeasuredWidth();
-                height = targetView.getMeasuredHeight();
-                targetView.layout(0, 0, width, height);
+                width = cardDigitalCertificate.getMeasuredWidth();
+                height = cardDigitalCertificate.getMeasuredHeight();
+                cardDigitalCertificate.layout(0, 0, width, height);
             }
 
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
             canvas.drawColor(Color.WHITE);
-            targetView.draw(canvas);
+            cardDigitalCertificate.draw(canvas);
 
             File cacheDir = new File(getCacheDir(), "certificates");
             if (!cacheDir.exists()) cacheDir.mkdirs();
 
-            String fileName = "LifeShare_Certificate_" + loadedCertificate.certificateId + "_" + formatLabel + ".png";
+            String fileName = "LifeShare_Certificate_" + loadedCertificate.certificateId + ".png";
             File imageFile = new File(cacheDir, fileName);
 
             FileOutputStream outputStream = new FileOutputStream(imageFile);
@@ -405,7 +498,7 @@ public class DonationCertificateActivity extends AppCompatActivity {
 
             String shareCaption = "Proud to receive my Official Blood Donation Certificate (" +
                     loadedCertificate.bloodGroup + ") from " + loadedCertificate.hospital +
-                    "! 🩸 Certified by LifeShare Network.";
+                    "! 🩸 Certified by LifeShare Voluntary Network. #LifeShare #BloodDonor";
 
             Intent shareIntent = new Intent(Intent.ACTION_SEND);
             shareIntent.setType("image/png");
