@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Outer Gold Ring -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#FFF9E6" />
+            <stroke
+                android:width="2dp"
+                android:color="#D4AF37" />
+        </shape>
+    </item>
+
+    <!-- Inner Crimson Accent Ring -->
+    <item
+        android:bottom="4dp"
+        android:left="4dp"
+        android:right="4dp"
+        android:top="4dp">
+        <shape android:shape="oval">
+            <solid android:color="#FFFFFF" />
+            <stroke
+                android:width="1dp"
+                android:color="#C62828" />
+        </shape>
+    </item>
+</layer-list>

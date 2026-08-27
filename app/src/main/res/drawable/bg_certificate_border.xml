@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Outer Paper Canvas Background -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFEFC" />
+            <stroke
+                android:width="3dp"
+                android:color="#D4AF37" />
+            <corners android:radius="4dp" />
+        </shape>
+    </item>
+
+    <!-- Inner Margin Space -->
+    <item
+        android:bottom="8dp"
+        android:left="8dp"
+        android:right="8dp"
+        android:top="8dp">
+        <shape android:shape="rectangle">
+            <stroke
+                android:width="1.5dp"
+                android:color="#C62828" />
+            <solid android:color="#00000000" />
+            <corners android:radius="2dp" />
+        </shape>
+    </item>
+
+    <!-- Sub-inner Fine Gold Line -->
+    <item
+        android:bottom="12dp"
+        android:left="12dp"
+        android:right="12dp"
+        android:top="12dp">
+        <shape android:shape="rectangle">
+            <stroke
+                android:width="0.75dp"
+                android:color="#E2D4A8" />
+            <solid android:color="#00000000" />
+        </shape>
+    </item>
+</layer-list>
