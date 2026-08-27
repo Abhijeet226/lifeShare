@@ -3,7 +3,6 @@ package com.example.abhijeet.bloodbank;
 import android.app.Activity;
 import android.content.res.Configuration;
 import android.graphics.Color;
-import android.os.Build;
 import android.view.View;
 import android.view.Window;
 
@@ -20,27 +19,27 @@ public class WindowHelper {
         Window window = activity.getWindow();
         if (window == null) return;
 
-        // 1. Enable true edge-to-edge window drawing
+        // 1. Enable modern edge-to-edge window drawing
         WindowCompat.setDecorFitsSystemWindows(window, false);
 
         // 2. Set fully transparent status and navigation bars
         window.setStatusBarColor(Color.TRANSPARENT);
         window.setNavigationBarColor(Color.TRANSPARENT);
 
-        // 3. Disable OS scrims / contrast enforcement on Android 10+ (API 29+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            window.setStatusBarContrastEnforced(false);
-            window.setNavigationBarContrastEnforced(false);
-        }
-
         boolean isDarkMode = (activity.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
                 == Configuration.UI_MODE_NIGHT_YES;
 
-        // 4. Status and Navigation bar icons contrast: dark icons in Light Mode, light icons in Dark Mode
+        // 3. Status bar icons contrast: dark icons in Light Mode, light icons in Dark Mode
         WindowInsetsControllerCompat insetsController = WindowCompat.getInsetsController(window, window.getDecorView());
         if (insetsController != null) {
             insetsController.setAppearanceLightStatusBars(!isDarkMode);
             insetsController.setAppearanceLightNavigationBars(!isDarkMode);
+        }
+
+        // 4. Dynamic Window Insets Handling on Activity content root (Single Source of Truth)
+        View contentView = window.findViewById(android.R.id.content);
+        if (contentView != null) {
+            applySystemBarInsets(contentView);
         }
     }
 
@@ -50,13 +49,10 @@ public class WindowHelper {
             Insets statusBarInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars());
             Insets navBarInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
 
-            v.setPadding(
-                    v.getPaddingLeft(),
-                    statusBarInsets.top,
-                    v.getPaddingRight(),
-                    navBarInsets.bottom
-            );
-            return insets;
+            // Apply status bar height as top padding so content never clips under the notch/status bar
+            // Apply navigation bar height as bottom padding so bottom docks stay above gesture bar
+            v.setPadding(0, statusBarInsets.top, 0, navBarInsets.bottom);
+            return WindowInsetsCompat.CONSUMED;
         });
         ViewCompat.requestApplyInsets(view);
     }
@@ -75,11 +71,6 @@ public class WindowHelper {
         // Keep system bars transparent for true edge-to-edge
         window.setStatusBarColor(Color.TRANSPARENT);
         window.setNavigationBarColor(Color.TRANSPARENT);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            window.setStatusBarContrastEnforced(false);
-            window.setNavigationBarContrastEnforced(false);
-        }
 
         if (tab == 0 /* TAB_HOME */) {
             // Home hero banner: Light icons on red hero in light mode, light icons in dark mode
