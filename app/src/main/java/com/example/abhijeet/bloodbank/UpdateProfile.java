@@ -94,15 +94,6 @@ public class UpdateProfile extends AppCompatActivity {
             tvTitle.setText("Personal Information");
         }
 
-        Toolbar toolbar = findViewById(R.id.toolBar);
-        if (toolbar != null) {
-            setSupportActionBar(toolbar);
-            if (getSupportActionBar() != null) {
-                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-                getSupportActionBar().setDisplayShowHomeEnabled(true);
-            }
-        }
-
         etFirstName = findViewById(R.id.etFirstNameUpdate);
         etLastName = findViewById(R.id.etLastNameUpdate);
         spinnerGender = findViewById(R.id.spinnerGenderUpdate);

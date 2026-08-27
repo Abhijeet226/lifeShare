@@ -1,13 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Brand Crimson / Blood Red Palette -->
-    <color name="colorPrimary">#C62828</color>
-    <color name="colorPrimaryDark">#8E0000</color>
-    <color name="colorPrimaryLight">#FF5F52</color>
-    <color name="colorAccent">#E53935</color>
-    <color name="colorSecondary">#D32F2F</color>
+    <!-- =================================================================== -->
+    <!-- 1. CORE BRAND CRIMSON PALETTE (Single Point of Truth for Hero Red)   -->
+    <!-- =================================================================== -->
+    <color name="brand_crimson_primary">#C62828</color>
+    <color name="brand_crimson_dark">#8E0000</color>
+    <color name="brand_crimson_light">#FF5F52</color>
+    <color name="brand_crimson_accent">#E53935</color>
+    <color name="brand_crimson_surface_tint">#FFEBEE</color>
+    <color name="brand_crimson_gradient_end">#B71C1C</color>
 
-    <!-- Material 3 Tonal Surfaces & Backgrounds -->
+    <!-- =================================================================== -->
+    <!-- 2. MATERIAL THEME SEMANTIC ALIASES (Linked to Core Variables)       -->
+    <!-- =================================================================== -->
+    <color name="colorPrimary">@color/brand_crimson_primary</color>
+    <color name="colorPrimaryDark">@color/brand_crimson_dark</color>
+    <color name="colorPrimaryLight">@color/brand_crimson_light</color>
+    <color name="colorAccent">@color/brand_crimson_accent</color>
+    <color name="colorSecondary">@color/brand_crimson_primary</color>
+
+    <!-- =================================================================== -->
+    <!-- 3. MATERIAL 3 TONAL SURFACES & CONTAINERS                           -->
+    <!-- =================================================================== -->
     <color name="background_color">#F8F9FA</color>
     <color name="surface_color">#FFFFFF</color>
     <color name="statusbar_color">#F8F9FA</color>
@@ -18,55 +32,57 @@
     <color name="surface_container">#F1F5F9</color>
     <color name="surface_container_high">#E2E8F0</color>
     <color name="surface_container_highest">#CBD5E1</color>
-
-    <!-- Status & Action Colors -->
-    <color name="status_available">#2E7D32</color>
-    <color name="status_available_bg">#E8F5E9</color>
-    <color name="status_busy">#C62828</color>
-    <color name="status_busy_bg">#FFEBEE</color>
-    <color name="whatsapp_green">#25D366</color>
-    <color name="call_blue">#1976D2</color>
-    <color name="sms_orange">#F57C00</color>
-
-    <!-- Neutral & Typography -->
-    <color name="white">#FFFFFF</color>
-    <color name="black">#121212</color>
-    <color name="text_primary">#0F172A</color>
-    <color name="text_secondary">#64748B</color>
-    <color name="text_hint">#94A3B8</color>
-    <color name="white_greyish">#F1F5F9</color>
-    <color name="button_selectorcolor">#9E9E9E</color>
-
-    <!-- Modern LifeShare V3 Design System Tokens -->
-    <color name="emergency_red_primary">#D32F2F</color>
-    <color name="emergency_red_dark">#B71C1C</color>
-    <color name="emergency_red_light">#FFEBEE</color>
-    <color name="emergency_red_gradient_start">#E53935</color>
-    <color name="emergency_red_gradient_end">#B71C1C</color>
-
-    <color name="verified_green">#2E7D32</color>
-    <color name="verified_green_bg">#E8F5E9</color>
-    <color name="verified_green_border">#C8E6C9</color>
-
-    <color name="cooldown_orange">#E65100</color>
-    <color name="cooldown_orange_bg">#FFF3E0</color>
-    <color name="cooldown_orange_border">#FFE0B2</color>
-
-    <color name="hospital_teal">#00897B</color>
-    <color name="hospital_teal_bg">#E0F2F1</color>
-    <color name="hospital_teal_border">#B2DFDB</color>
-
-    <color name="nav_active">#C62828</color>
-    <color name="nav_active_bg">#FFEBEE</color>
-    <color name="nav_inactive">#94A3B8</color>
-
     <color name="surface_elevated">#FFFFFF</color>
     <color name="surface_subtle">#F8FAFC</color>
     <color name="divider_subtle">#F1F5F9</color>
     <color name="border_subtle">#E2E8F0</color>
     <color name="ripple_light">#1F000000</color>
 
-    <!-- Action Button Pastel Backgrounds (Light) -->
+    <!-- =================================================================== -->
+    <!-- 4. HEALTHCARE STATUS & AVAILABILITY TOKENS                          -->
+    <!-- =================================================================== -->
+    <color name="status_available">#2E7D32</color>
+    <color name="status_available_bg">#E8F5E9</color>
+    <color name="status_busy">#C62828</color>
+    <color name="status_busy_bg">#FFEBEE</color>
+    <color name="cooldown_orange">#E65100</color>
+    <color name="cooldown_orange_bg">#FFF3E0</color>
+    <color name="cooldown_orange_border">#FFE0B2</color>
+    <color name="verified_green">#2E7D32</color>
+    <color name="verified_green_bg">#E8F5E9</color>
+    <color name="verified_green_border">#C8E6C9</color>
+    <color name="hospital_teal">#00897B</color>
+    <color name="hospital_teal_bg">#E0F2F1</color>
+    <color name="hospital_teal_border">#B2DFDB</color>
+
+    <!-- =================================================================== -->
+    <!-- 5. EMERGENCY SOS HERO TOKENS                                        -->
+    <!-- =================================================================== -->
+    <color name="emergency_red_primary">#D32F2F</color>
+    <color name="emergency_red_dark">#B71C1C</color>
+    <color name="emergency_red_light">#FFEBEE</color>
+    <color name="emergency_red_gradient_start">#E53935</color>
+    <color name="emergency_red_gradient_end">#B71C1C</color>
+
+    <!-- =================================================================== -->
+    <!-- 6. TYPOGRAPHY & NEUTRAL TOKENS                                      -->
+    <!-- =================================================================== -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#121212</color>
+    <color name="text_primary">#0F172A</color>
+    <color name="text_secondary">#64748B</color>
+    <color name="text_hint">#94A3B8</color>
+    <color name="white_greyish">#F1F5F9</color>
+
+    <!-- =================================================================== -->
+    <!-- 7. NAVIGATION & ACTION PILL TOKENS                                  -->
+    <!-- =================================================================== -->
+    <color name="nav_active">@color/brand_crimson_primary</color>
+    <color name="nav_active_bg">@color/brand_crimson_surface_tint</color>
+    <color name="nav_inactive">#94A3B8</color>
+    <color name="whatsapp_green">#25D366</color>
+    <color name="call_blue">#1976D2</color>
+    <color name="sms_orange">#F57C00</color>
     <color name="call_action_bg">#E3F2FD</color>
     <color name="sms_action_bg">#FFF3E0</color>
     <color name="whatsapp_action_bg">#E8F5E9</color>
@@ -76,7 +92,9 @@
     <color name="segmented_pill_bg">#F1F5F9</color>
     <color name="segmented_unselected_bg">#FFFFFF</color>
 
-    <!-- Multi-Colored Categorized Menu & Settings Icons (Light) -->
+    <!-- =================================================================== -->
+    <!-- 8. MENU & SETTINGS CATEGORY ICONS                                   -->
+    <!-- =================================================================== -->
     <color name="icon_personal_info">#1E88E5</color>
     <color name="icon_security">#FB8C00</color>
     <color name="icon_theme">#00897B</color>

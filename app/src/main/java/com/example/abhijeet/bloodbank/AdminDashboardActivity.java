@@ -1593,12 +1593,15 @@ public class AdminDashboardActivity extends AppCompatActivity {
     }
 
     private void confirmUnassignCoordinator(final ApiClient.AdminHospitalItem hospital, final String coordinatorId, final String coordinatorName, final AlertDialog parentDialog) {
-        new AlertDialog.Builder(this)
-                .setTitle("Unassign Coordinator")
-                .setMessage("Are you sure you want to unassign " + coordinatorName + " from " + hospital.name + "?\n\nTheir coordinator privileges will be revoked and their tenure performance will be archived.")
-                .setPositiveButton("Unassign & Archive", new DialogInterface.OnClickListener() {
+        showAdminConfirmationDialog(
+                "Unassign Coordinator",
+                "Revoke Hospital Assignment",
+                "Are you sure you want to unassign " + coordinatorName + " from " + hospital.name + "?\n\nTheir coordinator privileges will be revoked and their tenure performance will be archived in the security registry.",
+                "Unassign & Archive",
+                true,
+                new Runnable() {
                     @Override
-                    public void onClick(DialogInterface d, int which) {
+                    public void run() {
                         if (swipeRefresh != null) swipeRefresh.setRefreshing(true);
                         apiClient.unassignHospitalCoordinator(hospital.id, coordinatorId, "Unassigned by Super Admin", new ApiClient.ApiCallback<JsonObject>() {
                             @Override
@@ -1616,9 +1619,8 @@ public class AdminDashboardActivity extends AppCompatActivity {
                             }
                         });
                     }
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+                }
+        );
     }
 
     private void showOnboardCoordinatorDialog(final ApiClient.AdminHospitalItem hospital) {
