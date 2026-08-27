@@ -2,12 +2,27 @@
 
     <!-- Base application theme with automatic DayNight system dark mode. -->
     <style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorPrimary">@color/color_primary</item>
+        <item name="colorOnPrimary">@color/color_on_primary</item>
+        <item name="colorPrimaryContainer">@color/color_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/color_on_primary_container</item>
+        <item name="colorSecondary">@color/color_secondary</item>
+        <item name="colorOnSecondary">@color/color_on_secondary</item>
+        <item name="colorSurface">@color/color_surface</item>
+        <item name="colorOnSurface">@color/color_on_surface</item>
+        <item name="colorSurfaceVariant">@color/color_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/color_on_surface_variant</item>
+        <item name="colorSurfaceContainer">@color/color_surface_container</item>
+        <item name="colorSurfaceContainerLow">@color/color_surface_container_low</item>
+        <item name="colorSurfaceContainerHigh">@color/color_surface_container_high</item>
+        <item name="colorSurfaceContainerHighest">@color/color_surface_container_highest</item>
+        <item name="colorOutline">@color/color_outline</item>
+        <item name="colorOutlineVariant">@color/color_outline_variant</item>
+        <item name="colorError">@color/color_error</item>
+        <item name="colorOnError">@color/color_on_error</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
-        <item name="android:windowBackground">?attr/colorSurface</item>
+        <item name="android:windowBackground">@color/color_background</item>
     </style>
 
     <style name="SplashTheme" parent="Theme.Material3.DayNight.NoActionBar">
