@@ -6,14 +6,74 @@
     android:background="?attr/colorSurface"
     android:orientation="vertical">
 
-    <!-- Seamless Header -->
-    <include layout="@layout/layout_seamless_header" />
+    <!-- Top Navigation Bar with Print & Share Icons -->
+    <LinearLayout
+        android:id="@+id/layout_header_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp">
+
+        <!-- Back Button -->
+        <ImageView
+            android:id="@+id/btn_back"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:contentDescription="Back"
+            android:focusable="true"
+            android:padding="8dp"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="?attr/colorOnSurface" />
+
+        <!-- Screen Title -->
+        <TextView
+            android:id="@+id/tv_header_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:text="Donation Certificate"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <!-- Print Action Icon -->
+        <ImageView
+            android:id="@+id/btn_header_print"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="4dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:contentDescription="Print Certificate"
+            android:focusable="true"
+            android:padding="8dp"
+            android:src="@drawable/ic_print"
+            app:tint="?attr/colorOnSurface" />
+
+        <!-- Share Action Icon -->
+        <ImageView
+            android:id="@+id/btn_header_share"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:contentDescription="Share Certificate"
+            android:focusable="true"
+            android:padding="8dp"
+            android:src="@drawable/ic_nav_share"
+            app:tint="?attr/colorOnSurface" />
+    </LinearLayout>
 
     <!-- Scrollable Certificate Canvas -->
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="match_parent"
         android:clipToPadding="false"
         android:fillViewport="true">
 
@@ -23,7 +83,7 @@
             android:gravity="center"
             android:orientation="vertical"
             android:paddingHorizontal="16dp"
-            android:paddingVertical="8dp">
+            android:paddingVertical="12dp">
 
             <!-- Mobile & WhatsApp Sharable Certificate Card (Flat & Seamless) -->
             <com.google.android.material.card.MaterialCardView
@@ -306,48 +366,5 @@
 
         </LinearLayout>
     </ScrollView>
-
-    <!-- Bottom Actions Row (Symmetrical Same-Row Dual Actions) -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/colorSurface"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="10dp"
-        android:paddingBottom="16dp">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_print_pdf"
-            style="@style/Widget.LifeShare.Button.Tonal"
-            android:layout_width="0dp"
-            android:layout_height="52dp"
-            android:layout_marginEnd="6dp"
-            android:layout_weight="1"
-            android:text="Print / PDF (A4)"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="13sp"
-            app:cornerRadius="26dp"
-            app:icon="@drawable/ic_print"
-            app:iconGravity="textStart"
-            app:iconPadding="6dp"
-            app:iconSize="18dp"
-            app:iconTint="?attr/colorOnSurface" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_share_certificate"
-            style="@style/Widget.LifeShare.Button.Primary"
-            android:layout_width="0dp"
-            android:layout_height="52dp"
-            android:layout_marginStart="6dp"
-            android:layout_weight="1"
-            android:text="Share Image"
-            android:textSize="13sp"
-            app:cornerRadius="26dp"
-            app:icon="@drawable/ic_nav_share"
-            app:iconGravity="textStart"
-            app:iconPadding="6dp"
-            app:iconSize="18dp" />
-    </LinearLayout>
 
 </LinearLayout>

@@ -82,12 +82,13 @@ public class DonationCertificateActivity extends AppCompatActivity {
         if (tvTitle != null) {
             tvTitle.setText("Donation Certificate");
         }
-        ImageView btnHeaderPrint = findViewById(R.id.btn_header_action);
+        ImageView btnHeaderPrint = findViewById(R.id.btn_header_print);
         if (btnHeaderPrint != null) {
-            btnHeaderPrint.setImageResource(R.drawable.ic_print);
-            btnHeaderPrint.setContentDescription("Print Certificate");
-            btnHeaderPrint.setVisibility(View.VISIBLE);
             btnHeaderPrint.setOnClickListener(v -> printA4Certificate());
+        }
+        ImageView btnHeaderShare = findViewById(R.id.btn_header_share);
+        if (btnHeaderShare != null) {
+            btnHeaderShare.setOnClickListener(v -> shareMobileCertificateImage());
         }
 
         initViews();
@@ -112,17 +113,6 @@ public class DonationCertificateActivity extends AppCompatActivity {
         tvCertHash = findViewById(R.id.tv_cert_hash);
         tvTamperBadge = findViewById(R.id.tv_cert_tamper_badge);
         ivCertQrCode = findViewById(R.id.iv_cert_qr_code);
-
-        btnPrintPdf = findViewById(R.id.btn_print_pdf);
-        btnShareCertificate = findViewById(R.id.btn_share_certificate);
-
-        if (btnPrintPdf != null) {
-            btnPrintPdf.setOnClickListener(v -> printA4Certificate());
-        }
-
-        if (btnShareCertificate != null) {
-            btnShareCertificate.setOnClickListener(v -> shareMobileCertificateImage());
-        }
     }
 
     private void loadCertificateDetails() {
