@@ -565,6 +565,64 @@ router.patch('/hospitals/:id', async (req, res) => {
   }
 });
 
+// DELETE /api/admin/hospitals/:id - Safe Hospital Decommissioning & Deletion
+router.delete('/hospitals/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid Hospital ID.' });
+    }
+
+    const hospital = await Hospital.findById(id);
+    if (!hospital) {
+      return res.status(404).json({ success: false, message: 'Hospital not found.' });
+    }
+
+    // 1. Check for unresolved active emergencies
+    const activeEmergencies = await EmergencyRequest.countDocuments({
+      hospitalId: id,
+      isFulfilled: false,
+      status: { $nin: ['CANCELLED', 'EXPIRED', 'COMPLETED', 'DONATION_COMPLETED', 'FULFILLED'] }
+    });
+
+    if (activeEmergencies > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot delete hospital with ${activeEmergencies} active emergency request(s) in progress. Please resolve or close them first.`
+      });
+    }
+
+    // 2. Unassign and reset role for all associated coordinators
+    await User.updateMany(
+      { hospitalId: id },
+      { $set: { hospitalId: null, role: 'DONOR' } }
+    );
+
+    // 3. Delete hospital record
+    await Hospital.findByIdAndDelete(id);
+
+    // 4. Log audit trail
+    logAuditEvent({
+      actorId: req.currentUser._id,
+      actorRole: 'ADMIN',
+      action: 'HOSPITAL_DELETED',
+      entityType: 'Hospital',
+      entityId: id,
+      metadata: {
+        hospitalName: hospital.name,
+        address: hospital.address
+      }
+    });
+
+    res.json({
+      success: true,
+      message: `Hospital "${hospital.name}" deleted successfully. Assigned coordinators unlinked.`
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // POST /api/admin/coordinators/onboard - Direct Coordinator Onboarding & Provisioning
 router.post('/coordinators/onboard', async (req, res) => {
   try {

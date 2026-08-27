@@ -1492,6 +1492,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
         TextView tvHospName = dialogView.findViewById(R.id.tv_manage_hospital_name);
         MaterialButton btnAdd = dialogView.findViewById(R.id.btn_hospital_add_coordinator);
+        MaterialButton btnDelete = dialogView.findViewById(R.id.btn_hospital_delete);
         MaterialButton btnClose = dialogView.findViewById(R.id.btn_manage_coordinators_close);
         final LinearLayout containerActive = dialogView.findViewById(R.id.container_active_coordinators);
         final LinearLayout containerEx = dialogView.findViewById(R.id.container_ex_coordinators);
@@ -1505,6 +1506,28 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     dialog.dismiss();
+                }
+            });
+        }
+
+        if (btnDelete != null) {
+            btnDelete.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dialog.dismiss();
+                    showAdminConfirmationDialog(
+                            "Delete Hospital",
+                            "Hospital Decommissioning",
+                            "Are you sure you want to permanently delete \"" + hospital.name + "\"?\n\nAll assigned coordinators will be unassigned and reverted to standard donors.",
+                            "Delete Hospital",
+                            true,
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    deleteHospital(hospital.id, hospital.name);
+                                }
+                            }
+                    );
                 }
             });
         }
@@ -1650,6 +1673,25 @@ public class AdminDashboardActivity extends AppCompatActivity {
                     }
                 }
         );
+    }
+
+    private void deleteHospital(String hospitalId, final String hospitalName) {
+        if (swipeRefresh != null) swipeRefresh.setRefreshing(true);
+        apiClient.deleteAdminHospital(hospitalId, new ApiClient.ApiCallback<JsonObject>() {
+            @Override
+            public void onSuccess(JsonObject result) {
+                if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
+                Toast.makeText(AdminDashboardActivity.this, "Hospital \"" + hospitalName + "\" deleted successfully", Toast.LENGTH_LONG).show();
+                loadHospitals();
+                loadStats();
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
+                Toast.makeText(AdminDashboardActivity.this, "Failed to delete hospital: " + errorMessage, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void showOnboardCoordinatorDialog(final ApiClient.AdminHospitalItem hospital) {

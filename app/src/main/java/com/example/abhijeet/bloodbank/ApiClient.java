@@ -1838,6 +1838,20 @@ public class ApiClient {
         });
     }
 
+    public void deleteAdminHospital(String hospitalId, final ApiCallback<JsonObject> callback) {
+        delete("/admin/hospitals/" + hospitalId, new InternalCallback() {
+            @Override
+            public void onSuccess(JsonObject response) {
+                callback.onSuccess(response);
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                callback.onError(errorMessage);
+            }
+        });
+    }
+
     public void onboardCoordinator(String name, String email, String mobile, String hospitalId, String staffId, final ApiCallback<JsonObject> callback) {
         JsonObject body = new JsonObject();
         body.addProperty("name", name);

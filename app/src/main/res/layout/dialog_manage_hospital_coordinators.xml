@@ -137,15 +137,35 @@
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_manage_coordinators_close"
-            style="@style/Widget.LifeShare.Button.Primary"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="46dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Done"
-            android:textSize="13sp"
-            app:cornerRadius="23dp" />
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_hospital_delete"
+                style="@style/Widget.LifeShare.Button.Tonal"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:text="Delete Hospital"
+                android:textColor="@color/status_busy"
+                android:textSize="12.5sp"
+                app:cornerRadius="23dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_manage_coordinators_close"
+                style="@style/Widget.LifeShare.Button.Primary"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1.2"
+                android:text="Done"
+                android:textSize="13sp"
+                app:cornerRadius="23dp" />
+        </LinearLayout>
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
