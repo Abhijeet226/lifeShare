@@ -157,7 +157,17 @@ public class ApiClient {
         }
         user.setRole(optString(u, "role", "DONOR"));
         user.setDonationsCount(optInt(u, "donationsCount", 0));
+        user.setKarmaPoints(optInt(u, "karmaPoints", 0));
         user.setLastDonationDate(optString(u, "lastDonationDate", ""));
+
+        if (u.has("badges") && u.get("badges").isJsonArray()) {
+            java.util.List<DonorBadge> badgeList = new java.util.ArrayList<>();
+            for (JsonElement el : u.getAsJsonArray("badges")) {
+                DonorBadge b = gson.fromJson(el, DonorBadge.class);
+                if (b != null) badgeList.add(b);
+            }
+            user.setBadges(badgeList);
+        }
 
         if (u.has("eligibility") && u.get("eligibility").isJsonObject()) {
             JsonObject el = u.getAsJsonObject("eligibility");
@@ -1400,6 +1410,26 @@ public class ApiClient {
         public String verifiedAt;
     }
 
+    public static class DonorBadge {
+        public String badgeId;
+        public String name;
+        public String iconKey;
+        public String description;
+        public String awardedAt;
+    }
+
+    public static class LeaderboardItem {
+        public int rank;
+        public String id;
+        public String displayName;
+        public String bloodGroup;
+        public String city;
+        public int donationsCount;
+        public int karmaPoints;
+        public int badgeCount;
+        public DonorBadge topBadge;
+    }
+
     public static class HospitalDoctor {
         public String id;
         public String name;
@@ -1919,6 +1949,51 @@ public class ApiClient {
             @Override
             public void onError(String errorMessage) {
                 callback.onError(errorMessage);
+            }
+        });
+    }
+
+    public void getLeaderboard(final ApiCallback<List<LeaderboardItem>> callback) {
+        get("/users/leaderboard", new InternalCallback() {
+            @Override
+            public void onSuccess(JsonObject response) {
+                try {
+                    List<LeaderboardItem> list = new ArrayList<>();
+                    if (response.has("leaderboard") && response.get("leaderboard").isJsonArray()) {
+                        for (JsonElement el : response.getAsJsonArray("leaderboard")) {
+                            LeaderboardItem item = gson.fromJson(el, LeaderboardItem.class);
+                            if (item != null) list.add(item);
+                        }
+                    }
+                    callback.onSuccess(list);
+                } catch (Exception e) {
+                    callback.onError("Failed to parse leaderboard: " + e.getMessage());
+                }
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                callback.onError(errorMessage);
+            }
+        });
+    }
+
+    public void coordinatorOnboardDonor(String name, String mobile, String bloodGroup, String gender, final ApiCallback<JsonObject> callback) {
+        JsonObject json = new JsonObject();
+        json.addProperty("name", name);
+        json.addProperty("mobile", mobile);
+        json.addProperty("bloodGroup", bloodGroup);
+        if (gender != null && !gender.isEmpty()) json.addProperty("gender", gender);
+
+        post("/users/coordinator-onboard-donor", json.toString(), new InternalCallback() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                callback.onSuccess(body);
+            }
+
+            @Override
+            public void onError(String error) {
+                callback.onError(error);
             }
         });
     }

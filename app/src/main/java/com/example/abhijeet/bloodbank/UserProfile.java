@@ -34,6 +34,8 @@ public class UserProfile {
     private boolean phoneVerified = false;
     private boolean emailVerified = false;
     private int donationsCount = 0;
+    private int karmaPoints = 0;
+    private java.util.List<ApiClient.DonorBadge> badges = new java.util.ArrayList<>();
 
     public UserProfile() {
         this.isAvailable = true;
@@ -365,5 +367,21 @@ public class UserProfile {
 
     public void setNextEligibleDate(String nextEligibleDate) {
         this.nextEligibleDate = nextEligibleDate;
+    }
+
+    public int getKarmaPoints() {
+        return karmaPoints;
+    }
+
+    public void setKarmaPoints(int karmaPoints) {
+        this.karmaPoints = karmaPoints;
+    }
+
+    public java.util.List<ApiClient.DonorBadge> getBadges() {
+        return badges != null ? badges : new java.util.ArrayList<ApiClient.DonorBadge>();
+    }
+
+    public void setBadges(java.util.List<ApiClient.DonorBadge> badges) {
+        this.badges = badges != null ? badges : new java.util.ArrayList<ApiClient.DonorBadge>();
     }
 }

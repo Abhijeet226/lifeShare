@@ -379,6 +379,241 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- DONOR KARMA & MILESTONE BADGES CARD -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_profile_badges"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <!-- Header with Karma Points Pill -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Karma &amp; Milestone Badges"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Verified voluntary lifesaving impact"
+                                android:textColor="?attr/colorOnSurfaceVariant"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <!-- Karma Pill -->
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            android:background="@drawable/bg_segmented_pill_container"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="10dp">
+
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@drawable/ic_badge_karma" />
+
+                            <TextView
+                                android:id="@+id/tv_profile_karma_points"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="6dp"
+                                android:text="100 Karma"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- 4 Badges Row -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:orientation="horizontal"
+                        android:weightSum="4">
+
+                        <!-- Badge 1: First Drop -->
+                        <LinearLayout
+                            android:id="@+id/badge_item_first_drop"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <FrameLayout
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="@drawable/bg_icon_bubble">
+
+                                <ImageView
+                                    android:id="@+id/iv_badge_first_drop"
+                                    android:layout_width="24dp"
+                                    android:layout_height="24dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_badge_first_drop" />
+                            </FrameLayout>
+
+                            <TextView
+                                android:id="@+id/tv_badge_first_drop"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:gravity="center"
+                                android:text="First Drop"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- Badge 2: Rare Guardian -->
+                        <LinearLayout
+                            android:id="@+id/badge_item_rare_guardian"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <FrameLayout
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="@drawable/bg_icon_bubble">
+
+                                <ImageView
+                                    android:id="@+id/iv_badge_rare_guardian"
+                                    android:layout_width="24dp"
+                                    android:layout_height="24dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_badge_rare_guardian" />
+                            </FrameLayout>
+
+                            <TextView
+                                android:id="@+id/tv_badge_rare_guardian"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:gravity="center"
+                                android:text="Rare Hero"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- Badge 3: Silver Saver -->
+                        <LinearLayout
+                            android:id="@+id/badge_item_silver_saver"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <FrameLayout
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="@drawable/bg_icon_bubble">
+
+                                <ImageView
+                                    android:id="@+id/iv_badge_silver_saver"
+                                    android:layout_width="24dp"
+                                    android:layout_height="24dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_badge_silver_saver" />
+                            </FrameLayout>
+
+                            <TextView
+                                android:id="@+id/tv_badge_silver_saver"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:gravity="center"
+                                android:text="3x Saver"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- Badge 4: Gold Hero -->
+                        <LinearLayout
+                            android:id="@+id/badge_item_gold_hero"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <FrameLayout
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="@drawable/bg_icon_bubble">
+
+                                <ImageView
+                                    android:id="@+id/iv_badge_gold_hero"
+                                    android:layout_width="24dp"
+                                    android:layout_height="24dp"
+                                    android:layout_gravity="center"
+                                    android:src="@drawable/ic_badge_gold_hero" />
+                            </FrameLayout>
+
+                            <TextView
+                                android:id="@+id/tv_badge_gold_hero"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:gravity="center"
+                                android:text="5x Hero"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- View Hall of Fame Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_view_hall_of_fame"
+                        style="@style/Widget.LifeShare.Button.Tonal"
+                        android:layout_width="match_parent"
+                        android:layout_height="42dp"
+                        android:layout_marginTop="14dp"
+                        android:text="View Community Hall of Fame"
+                        android:textSize="12.5sp"
+                        app:cornerRadius="12dp"
+                        app:icon="@drawable/ic_badge_karma"
+                        app:iconGravity="textStart"
+                        app:iconPadding="6dp"
+                        app:iconSize="16dp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- SETTINGS & PREFERENCES MENU -->
             <com.google.android.material.card.MaterialCardView

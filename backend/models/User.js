@@ -63,6 +63,14 @@ const userSchema = new mongoose.Schema({
   lastActiveAt: { type: Date, default: Date.now },
   lastDonationDate: { type: Date, default: null },
   donationsCount: { type: Number, default: 0 },
+  karmaPoints: { type: Number, default: 0 },
+  badges: [{
+    badgeId: { type: String, required: true },
+    name: { type: String, required: true },
+    iconKey: { type: String, required: true },
+    description: { type: String, default: '' },
+    awardedAt: { type: Date, default: Date.now }
+  }],
 
   // Privacy and security preferences
   hideMobileNumber: { type: Boolean, default: false },

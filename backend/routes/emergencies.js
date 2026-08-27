@@ -948,9 +948,63 @@ router.post('/:id/verify-donation', authenticateToken, async (req, res) => {
     }
     await emergency.save();
 
-    // 10. Update Donor: lastDonationDate & donationsCount
+    // 10. Update Donor: lastDonationDate, donationsCount, Karma & Badges
     donor.lastDonationDate = donationDate;
-    donor.donationsCount = (donor.donationsCount || 0) + 1;
+    const newCount = (donor.donationsCount || 0) + 1;
+    donor.donationsCount = newCount;
+
+    // Calculate Karma points (+100 base, +50 rare blood group bonus)
+    const isRare = ['O-', 'AB-', 'B-', 'A-'].includes(donor.bloodGroup);
+    const earnedKarma = 100 + (isRare ? 50 : 0);
+    donor.karmaPoints = (donor.karmaPoints || 0) + earnedKarma;
+
+    if (!donor.badges) donor.badges = [];
+    const hasBadge = (bid) => donor.badges.some(b => b.badgeId === bid);
+
+    // 1st donation badge
+    if (newCount >= 1 && !hasBadge('BADGE_FIRST_DROP')) {
+      donor.badges.push({
+        badgeId: 'BADGE_FIRST_DROP',
+        name: 'First Voluntary Donation',
+        iconKey: 'ic_badge_first_drop',
+        description: 'Completed your first verified life-saving blood donation.',
+        awardedAt: donationDate
+      });
+    }
+
+    // Rare guardian badge
+    if (isRare && !hasBadge('BADGE_RARE_GUARDIAN')) {
+      donor.badges.push({
+        badgeId: 'BADGE_RARE_GUARDIAN',
+        name: 'Rare Blood Guardian',
+        iconKey: 'ic_badge_rare_guardian',
+        description: 'Responded to critical need with a rare blood group.',
+        awardedAt: donationDate
+      });
+    }
+
+    // Silver Saver (3+ donations)
+    if (newCount >= 3 && !hasBadge('BADGE_SILVER_SAVER')) {
+      donor.badges.push({
+        badgeId: 'BADGE_SILVER_SAVER',
+        name: 'Silver Life Saver',
+        iconKey: 'ic_badge_silver_saver',
+        description: 'Achieved 3 verified life-saving blood donations.',
+        awardedAt: donationDate
+      });
+    }
+
+    // Gold Hero (5+ donations)
+    if (newCount >= 5 && !hasBadge('BADGE_GOLD_HERO')) {
+      donor.badges.push({
+        badgeId: 'BADGE_GOLD_HERO',
+        name: 'Gold Life Saver',
+        iconKey: 'ic_badge_gold_hero',
+        description: 'Distinguished lifesaver with 5+ verified blood donations.',
+        awardedAt: donationDate
+      });
+    }
+
     await donor.save();
 
     // Safe Audit Logging

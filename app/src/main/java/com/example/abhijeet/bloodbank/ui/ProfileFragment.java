@@ -16,6 +16,7 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -39,6 +40,7 @@ import com.example.abhijeet.bloodbank.R;
 import com.example.abhijeet.bloodbank.UpdatePassword;
 import com.example.abhijeet.bloodbank.UpdateProfile;
 import com.example.abhijeet.bloodbank.UserProfile;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
@@ -48,6 +50,9 @@ public class ProfileFragment extends Fragment {
 
     private TextView tvDonorName, tvBloodGroup, tvDonorId, tvCity, tvStatus, tvMenuProfileSub, tvAvailabilitySub;
     private TextView tvProfileDonationsCount, tvProfileLastDonation, tvProfileEligibilityStatus, tvProfileCooldownSubtext;
+    private TextView tvProfileKarmaPoints;
+    private View badgeItemFirstDrop, badgeItemRareGuardian, badgeItemSilverSaver, badgeItemGoldHero;
+    private MaterialButton btnViewHallOfFame;
     private View btnViewDonationHistory, btnCoordinatorDashboard, btnAdminDashboard;
     private ImageView ivWalletQr;
     private SwitchMaterial switchAvailability;
@@ -78,6 +83,23 @@ public class ProfileFragment extends Fragment {
         btnViewDonationHistory = view.findViewById(R.id.btn_view_donation_history);
         btnCoordinatorDashboard = view.findViewById(R.id.btn_coordinator_dashboard);
         btnAdminDashboard = view.findViewById(R.id.btn_admin_dashboard);
+
+        // Badges & Karma Views
+        tvProfileKarmaPoints = view.findViewById(R.id.tv_profile_karma_points);
+        badgeItemFirstDrop = view.findViewById(R.id.badge_item_first_drop);
+        badgeItemRareGuardian = view.findViewById(R.id.badge_item_rare_guardian);
+        badgeItemSilverSaver = view.findViewById(R.id.badge_item_silver_saver);
+        badgeItemGoldHero = view.findViewById(R.id.badge_item_gold_hero);
+        btnViewHallOfFame = view.findViewById(R.id.btn_view_hall_of_fame);
+
+        if (btnViewHallOfFame != null) {
+            btnViewHallOfFame.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showHallOfFameBottomSheet();
+                }
+            });
+        }
 
         if (btnViewDonationHistory != null) {
             btnViewDonationHistory.setOnClickListener(new View.OnClickListener() {
@@ -411,6 +433,32 @@ public class ProfileFragment extends Fragment {
             tvMenuProfileSub.setText(user.getEmail() != null ? user.getEmail() : user.getMobile());
         }
 
+        // Karma & Milestone Badges
+        if (tvProfileKarmaPoints != null) {
+            tvProfileKarmaPoints.setText(user.getKarmaPoints() + " Karma");
+        }
+
+        List<ApiClient.DonorBadge> badges = user.getBadges();
+        boolean hasFirstDrop = false, hasRareGuardian = false, hasSilverSaver = false, hasGoldHero = false;
+        if (badges != null) {
+            for (ApiClient.DonorBadge b : badges) {
+                if (b == null || b.badgeId == null) continue;
+                if ("BADGE_FIRST_DROP".equalsIgnoreCase(b.badgeId)) hasFirstDrop = true;
+                if ("BADGE_RARE_GUARDIAN".equalsIgnoreCase(b.badgeId)) hasRareGuardian = true;
+                if ("BADGE_SILVER_SAVER".equalsIgnoreCase(b.badgeId)) hasSilverSaver = true;
+                if ("BADGE_GOLD_HERO".equalsIgnoreCase(b.badgeId)) hasGoldHero = true;
+            }
+        }
+        if (user.getDonationsCount() >= 1) hasFirstDrop = true;
+        if (user.getDonationsCount() >= 3) hasSilverSaver = true;
+        if (user.getDonationsCount() >= 5) hasGoldHero = true;
+        if (user.getBloodGroup() != null && user.getBloodGroup().contains("-") && user.getDonationsCount() >= 1) hasRareGuardian = true;
+
+        if (badgeItemFirstDrop != null) badgeItemFirstDrop.setAlpha(hasFirstDrop ? 1.0f : 0.35f);
+        if (badgeItemRareGuardian != null) badgeItemRareGuardian.setAlpha(hasRareGuardian ? 1.0f : 0.35f);
+        if (badgeItemSilverSaver != null) badgeItemSilverSaver.setAlpha(hasSilverSaver ? 1.0f : 0.35f);
+        if (badgeItemGoldHero != null) badgeItemGoldHero.setAlpha(hasGoldHero ? 1.0f : 0.35f);
+
         // Generate crisp pure white QR with high contrast and explicit USERID tag
         try {
             String qrPayload = "LIFESHARE:DONOR|USERID=" + (user.getId() != null ? user.getId() : "") +
@@ -586,6 +634,103 @@ public class ProfileFragment extends Fragment {
         }
 
         dialog.show();
+    }
+
+    private void showHallOfFameBottomSheet() {
+        if (getContext() == null) return;
+
+        final BottomSheetDialog bottomSheet = new BottomSheetDialog(getContext());
+        View sheetView = LayoutInflater.from(getContext()).inflate(R.layout.layout_bottom_sheet_hall_of_fame, null);
+        bottomSheet.setContentView(sheetView);
+
+        final ProgressBar pb = sheetView.findViewById(R.id.pb_hall_of_fame);
+        final LinearLayout container = sheetView.findViewById(R.id.container_leaderboard_list);
+        View btnClose = sheetView.findViewById(R.id.btn_close_hall_of_fame);
+
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> bottomSheet.dismiss());
+        }
+
+        ApiClient.getInstance().getLeaderboard(new ApiClient.ApiCallback<List<ApiClient.LeaderboardItem>>() {
+            @Override
+            public void onSuccess(List<ApiClient.LeaderboardItem> items) {
+                if (getContext() == null) return;
+                if (pb != null) pb.setVisibility(View.GONE);
+                if (container != null) {
+                    container.setVisibility(View.VISIBLE);
+                    container.removeAllViews();
+
+                    if (items == null || items.isEmpty()) {
+                        TextView emptyTv = new TextView(getContext());
+                        emptyTv.setText("No public voluntary records yet. Be the first hero!");
+                        emptyTv.setTextColor(Color.parseColor("#9E9E9E"));
+                        emptyTv.setPadding(0, 20, 0, 20);
+                        container.addView(emptyTv);
+                        return;
+                    }
+
+                    for (ApiClient.LeaderboardItem item : items) {
+                        LinearLayout row = new LinearLayout(getContext());
+                        row.setOrientation(LinearLayout.HORIZONTAL);
+                        row.setPadding(0, 14, 0, 14);
+                        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+
+                        // Rank Circle
+                        TextView tvRank = new TextView(getContext());
+                        tvRank.setText("#" + item.rank);
+                        tvRank.setTextSize(13f);
+                        tvRank.setTypeface(null, android.graphics.Typeface.BOLD);
+                        tvRank.setTextColor(item.rank <= 3 ? Color.parseColor("#C62828") : Color.parseColor("#757575"));
+                        tvRank.setWidth(80);
+                        row.addView(tvRank);
+
+                        // Name + City
+                        LinearLayout nameCol = new LinearLayout(getContext());
+                        nameCol.setOrientation(LinearLayout.VERTICAL);
+                        LinearLayout.LayoutParams nameLp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+                        nameCol.setLayoutParams(nameLp);
+
+                        TextView tvName = new TextView(getContext());
+                        tvName.setText(item.displayName != null ? item.displayName : "Voluntary Hero");
+                        tvName.setTextSize(14f);
+                        tvName.setTypeface(null, android.graphics.Typeface.BOLD);
+                        tvName.setTextColor(Color.parseColor("#212121"));
+                        nameCol.addView(tvName);
+
+                        TextView tvSub = new TextView(getContext());
+                        tvSub.setText((item.city != null ? item.city : "Odisha") + " • " + item.bloodGroup + " • " + item.donationsCount + " donations");
+                        tvSub.setTextSize(11.5f);
+                        tvSub.setTextColor(Color.parseColor("#757575"));
+                        nameCol.addView(tvSub);
+
+                        row.addView(nameCol);
+
+                        // Karma Badge Pill
+                        TextView tvKarma = new TextView(getContext());
+                        tvKarma.setText(item.karmaPoints + " Karma");
+                        tvKarma.setTextSize(12f);
+                        tvKarma.setTypeface(null, android.graphics.Typeface.BOLD);
+                        tvKarma.setTextColor(Color.parseColor("#D97706"));
+                        row.addView(tvKarma);
+
+                        container.addView(row);
+
+                        View divider = new View(getContext());
+                        divider.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1));
+                        divider.setBackgroundColor(Color.parseColor("#E0E0E0"));
+                        container.addView(divider);
+                    }
+                }
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                if (pb != null) pb.setVisibility(View.GONE);
+                Toast.makeText(getContext(), "Failed to load Hall of Fame: " + errorMessage, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        bottomSheet.show();
     }
 
     private static class CenterViewHolder extends RecyclerView.ViewHolder {

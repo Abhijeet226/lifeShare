@@ -43,7 +43,7 @@ public class CoordinatorVerificationActivity extends AppCompatActivity {
     private LinearLayout layoutEmpty, containerDonors;
     private View layoutCoordSkeleton;
     private TextView tvEmptyMessage;
-    private MaterialButton btnScanDonorQr, btnSwitchToDonor;
+    private MaterialButton btnScanDonorQr, btnEnrollWalkin, btnSwitchToDonor;
     private FrameLayout btnCoordinatorProfile;
 
     // Floating Bottom Bar Views
@@ -139,11 +139,12 @@ public class CoordinatorVerificationActivity extends AppCompatActivity {
         cardScannerBanner = findViewById(R.id.card_coord_scanner_banner);
 
         layoutEmpty = findViewById(R.id.layout_coord_empty);
-        tvEmptyMessage = findViewById(R.id.tv_coord_empty_message);
-        layoutCoordSkeleton = findViewById(R.id.layout_coord_skeleton);
         containerDonors = findViewById(R.id.container_pending_donors);
+        layoutCoordSkeleton = findViewById(R.id.layout_coord_skeleton);
+        tvEmptyMessage = findViewById(R.id.tv_coord_empty_message);
 
         btnScanDonorQr = findViewById(R.id.btn_scan_donor_qr);
+        btnEnrollWalkin = findViewById(R.id.btn_coord_enroll_walkin);
         btnSwitchToDonor = findViewById(R.id.btn_coord_switch_to_donor);
         btnCoordinatorProfile = findViewById(R.id.btn_coordinator_profile);
 
@@ -195,6 +196,15 @@ public class CoordinatorVerificationActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     startQrScanner();
+                }
+            });
+        }
+
+        if (btnEnrollWalkin != null) {
+            btnEnrollWalkin.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showEnrollWalkinDialog();
                 }
             });
         }
@@ -643,6 +653,65 @@ public class CoordinatorVerificationActivity extends AppCompatActivity {
                 Toast.makeText(CoordinatorVerificationActivity.this, "Verification failed: " + errorMessage, Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void showEnrollWalkinDialog() {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_enroll_walkin_donor, null);
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .setCancelable(true)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+
+        final EditText etName = dialogView.findViewById(R.id.et_walkin_name);
+        final EditText etMobile = dialogView.findViewById(R.id.et_walkin_mobile);
+        final EditText etBloodGroup = dialogView.findViewById(R.id.et_walkin_blood_group);
+        View btnCancel = dialogView.findViewById(R.id.btn_cancel_walkin);
+        View btnSubmit = dialogView.findViewById(R.id.btn_submit_walkin);
+
+        if (btnCancel != null) {
+            btnCancel.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        if (btnSubmit != null) {
+            btnSubmit.setOnClickListener(v -> {
+                String name = etName != null ? etName.getText().toString().trim() : "";
+                String mobile = etMobile != null ? etMobile.getText().toString().trim() : "";
+                String blood = etBloodGroup != null ? etBloodGroup.getText().toString().trim().toUpperCase() : "O+";
+
+                if (name.isEmpty()) {
+                    if (etName != null) etName.setError("Full name required");
+                    return;
+                }
+                if (mobile.length() < 10) {
+                    if (etMobile != null) etMobile.setError("Valid 10-digit mobile required");
+                    return;
+                }
+
+                dialog.dismiss();
+                if (swipeRefresh != null) swipeRefresh.setRefreshing(true);
+
+                apiClient.coordinatorOnboardDonor(name, mobile, blood, "Male", new ApiClient.ApiCallback<JsonObject>() {
+                    @Override
+                    public void onSuccess(JsonObject result) {
+                        if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
+                        Toast.makeText(CoordinatorVerificationActivity.this, "Donor " + name + " (" + blood + ") enrolled & verified in rescue pool!", Toast.LENGTH_LONG).show();
+                        loadAllData();
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
+                        Toast.makeText(CoordinatorVerificationActivity.this, "Enrollment failed: " + errorMessage, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            });
+        }
+
+        dialog.show();
     }
 
     // =========================================================================

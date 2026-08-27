@@ -35,6 +35,8 @@ function sanitizeUser(user) {
     phoneVerified: !!user.phoneVerified,
     emailVerified: !!user.emailVerified,
     donationsCount: user.donationsCount || 0,
+    karmaPoints: user.karmaPoints || 0,
+    badges: user.badges || [],
     lastDonationDate: user.lastDonationDate || (eligibility ? eligibility.lastDonationDate : null),
     eligibility: eligibility,
     hideMobileNumber: user.hideMobileNumber,
@@ -256,6 +258,131 @@ router.put('/availability', authenticateToken, async (req, res) => {
   }
 });
 
+// GET /api/users/leaderboard - Community Hall of Fame (Top voluntary lifesavers)
+router.get('/leaderboard', async (req, res) => {
+  try {
+    const { limit = 25, cityId } = req.query;
+    const maxLimit = Math.min(parseInt(limit, 10) || 25, 50);
+
+    const query = {
+      accountStatus: 'ACTIVE',
+      role: 'DONOR'
+    };
+    if (cityId) {
+      query.cityId = cityId;
+    }
+
+    const topDonors = await User.find(query)
+      .select('name firstName lastName bloodGroup donationsCount karmaPoints badges cityId createdAt')
+      .populate('cityId', 'name stateName')
+      .sort({ karmaPoints: -1, donationsCount: -1, createdAt: 1 })
+      .limit(maxLimit);
+
+    const formatted = topDonors.map((u, index) => {
+      // Privacy-safe display: "Rahul S."
+      const displayName = u.firstName
+        ? `${u.firstName} ${u.lastName ? u.lastName.charAt(0) + '.' : ''}`.trim()
+        : (u.name ? u.name.split(' ')[0] : 'Voluntary Donor');
+
+      return {
+        rank: index + 1,
+        id: u._id,
+        displayName,
+        bloodGroup: u.bloodGroup,
+        city: u.cityId && u.cityId.name ? u.cityId.name : 'Odisha',
+        donationsCount: u.donationsCount || 0,
+        karmaPoints: u.karmaPoints || 0,
+        badgeCount: (u.badges || []).length,
+        topBadge: (u.badges && u.badges.length > 0) ? u.badges[u.badges.length - 1] : null
+      };
+    });
+
+    res.json({
+      success: true,
+      count: formatted.length,
+      leaderboard: formatted
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /api/users/coordinator-onboard-donor - Onboard & physically verify walk-in donor
+router.post('/coordinator-onboard-donor', authenticateToken, async (req, res) => {
+  try {
+    const coordinator = await User.findById(req.user.id);
+    if (!coordinator || (coordinator.role !== 'COORDINATOR' && coordinator.role !== 'ADMIN')) {
+      return res.status(403).json({ success: false, message: 'Forbidden: Coordinator authority required.' });
+    }
+
+    const { name, mobile, bloodGroup, cityId, gender } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ success: false, message: 'Donor full name is required.' });
+    }
+    if (!mobile || !mobile.trim()) {
+      return res.status(400).json({ success: false, message: 'Donor mobile number is required.' });
+    }
+    if (!bloodGroup || !['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].includes(bloodGroup)) {
+      return res.status(400).json({ success: false, message: 'Valid blood group is required.' });
+    }
+
+    const cleanMobile = mobile.trim();
+    let existingUser = await User.findOne({ mobile: cleanMobile });
+
+    if (existingUser) {
+      // Elevate verification status
+      existingUser.verificationStatus = 'DONOR_VERIFIED';
+      existingUser.phoneVerified = true;
+      existingUser.bloodGroup = bloodGroup;
+      if (cityId) existingUser.cityId = cityId;
+      await existingUser.save();
+
+      return res.json({
+        success: true,
+        message: 'Existing donor profile verified and enrolled into live rescue pool.',
+        user: sanitizeUser(existingUser)
+      });
+    }
+
+    // Create new donor account with auto-generated secure credentials
+    const dummyEmail = `donor_${cleanMobile.replace(/\D/g, '')}@lifeshare.net`;
+    const tempPassword = `LifeShare@${Math.floor(1000 + Math.random() * 9000)}`;
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+    const parts = name.trim().split(' ');
+    const firstName = parts[0] || 'Voluntary';
+    const lastName = parts.slice(1).join(' ') || 'Donor';
+
+    const newUser = new User({
+      name: name.trim(),
+      firstName,
+      lastName,
+      email: dummyEmail,
+      password: hashedPassword,
+      mobile: cleanMobile,
+      bloodGroup,
+      gender: gender || 'Male',
+      cityId: cityId || coordinator.cityId || null,
+      verificationStatus: 'DONOR_VERIFIED',
+      phoneVerified: true,
+      emailVerified: false,
+      isAvailable: true,
+      role: 'DONOR'
+    });
+
+    await newUser.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Walk-in donor enrolled successfully into live rescue pool.',
+      user: sanitizeUser(newUser)
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // DELETE /api/users/account
 router.delete('/account', authenticateToken, async (req, res) => {
   try {
@@ -267,3 +394,4 @@ router.delete('/account', authenticateToken, async (req, res) => {
 });
 
 module.exports = router;
+

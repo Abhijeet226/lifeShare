@@ -508,30 +508,38 @@ public class EmergencyDetailActivity extends AppCompatActivity {
     }
 
     private void launchNavigationToHospital(double lat, double lng, String hospitalName) {
-        if (lat == 0.0 && lng == 0.0) {
-            Toast.makeText(this, "Hospital GPS coordinates not available for direct navigation", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
+        String cleanHosp = hospitalName != null && !hospitalName.isEmpty() ? hospitalName : "Capital Hospital, Bhubaneswar";
         try {
-            // Intent 1: Google Maps Navigation
-            Uri navUri = Uri.parse("google.navigation:q=" + lat + "," + lng);
-            Intent mapIntent = new Intent(Intent.ACTION_VIEW, navUri);
-            mapIntent.setPackage("com.google.android.apps.maps");
-            if (mapIntent.resolveActivity(getPackageManager()) != null) {
-                startActivity(mapIntent);
-                return;
+            if (lat != 0.0 && lng != 0.0) {
+                // Intent 1: Google Maps Direct Navigation by Coordinates
+                Uri navUri = Uri.parse("google.navigation:q=" + lat + "," + lng);
+                Intent mapIntent = new Intent(Intent.ACTION_VIEW, navUri);
+                mapIntent.setPackage("com.google.android.apps.maps");
+                if (mapIntent.resolveActivity(getPackageManager()) != null) {
+                    startActivity(mapIntent);
+                    return;
+                }
+            } else {
+                // Search query navigation
+                Uri searchUri = Uri.parse("geo:0,0?q=" + Uri.encode(cleanHosp + ", Odisha"));
+                Intent mapIntent = new Intent(Intent.ACTION_VIEW, searchUri);
+                mapIntent.setPackage("com.google.android.apps.maps");
+                if (mapIntent.resolveActivity(getPackageManager()) != null) {
+                    startActivity(mapIntent);
+                    return;
+                }
             }
         } catch (Throwable ignored) {}
 
-        // Intent 2 Fallback: Generic Geo URI
+        // Fallback: Browser / Web Maps Direct URL
         try {
-            String label = Uri.encode(hospitalName != null ? hospitalName : "Hospital");
-            Uri fallbackUri = Uri.parse("geo:" + lat + "," + lng + "?q=" + lat + "," + lng + "(" + label + ")");
-            Intent fallbackIntent = new Intent(Intent.ACTION_VIEW, fallbackUri);
-            startActivity(fallbackIntent);
+            Uri webUri = (lat != 0.0 && lng != 0.0)
+                    ? Uri.parse("https://www.google.com/maps/dir/?api=1&destination=" + lat + "," + lng)
+                    : Uri.parse("https://www.google.com/maps/search/?api=1&query=" + Uri.encode(cleanHosp + ", Odisha"));
+            Intent webIntent = new Intent(Intent.ACTION_VIEW, webUri);
+            startActivity(webIntent);
         } catch (Throwable t) {
-            Toast.makeText(this, "No map navigation app installed on device", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Could not open map navigation", Toast.LENGTH_SHORT).show();
         }
     }
 
