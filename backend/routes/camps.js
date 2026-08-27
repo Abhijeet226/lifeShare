@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const BloodCamp = require('../models/BloodCamp');
 const Hospital = require('../models/Hospital');
 const City = require('../models/City');
-const { auth } = require('../middleware/auth');
+const { authenticateToken } = require('../middleware/auth');
 
 // GET /api/camps - List donation camps with status and city filtering
 router.get('/', async (req, res) => {
@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
       try {
         const jwt = require('jsonwebtoken');
         const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'lifeshare-secret-key-2025');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'lifeshare_secure_jwt_secret_2026');
         currentUserId = decoded.id || decoded._id;
       } catch (e) {
         // Continue unauthenticated
@@ -81,7 +81,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/camps - Create a new donation drive / camp
-router.post('/', auth, async (req, res) => {
+router.post('/', authenticateToken, async (req, res) => {
   try {
     const {
       title,
@@ -108,40 +108,36 @@ router.post('/', auth, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Start date and end date are required.' });
     }
 
-    let resolvedCityId = cityId;
-    let resolvedCityName = cityName || 'Bhubaneswar';
-    if (cityId && mongoose.Types.ObjectId.isValid(cityId)) {
-      const city = await City.findById(cityId);
-      if (city) resolvedCityName = city.name;
-    } else {
-      const defaultCity = await City.findOne({ normalizedName: 'bhubaneswar' });
-      if (defaultCity) {
-        resolvedCityId = defaultCity._id;
-        resolvedCityName = defaultCity.name;
+    let validHospitalId = null;
+    let resolvedOrganizerName = organizerName ? organizerName.trim() : 'Hospital Blood Bank';
+
+    if (hospitalId && mongoose.Types.ObjectId.isValid(hospitalId)) {
+      const hospital = await Hospital.findById(hospitalId);
+      if (hospital) {
+        validHospitalId = hospital._id;
+        resolvedOrganizerName = hospital.name;
       }
     }
 
-    let lat = parseFloat(latitude) || 20.2961;
-    let lng = parseFloat(longitude) || 85.8245;
-
-    let orgName = organizerName ? organizerName.trim() : 'LifeShare Blood Drive';
-    let linkedHospitalId = hospitalId && mongoose.Types.ObjectId.isValid(hospitalId) ? hospitalId : null;
-
-    if (!linkedHospitalId && req.currentUser && req.currentUser.hospitalId) {
-      linkedHospitalId = req.currentUser.hospitalId;
+    let validCityId = null;
+    let resolvedCityName = cityName ? cityName.trim() : 'Bhubaneswar';
+    if (cityId && mongoose.Types.ObjectId.isValid(cityId)) {
+      const city = await City.findById(cityId);
+      if (city) {
+        validCityId = city._id;
+        resolvedCityName = city.name;
+      }
     }
 
-    if (linkedHospitalId && !organizerName) {
-      const hosp = await Hospital.findById(linkedHospitalId);
-      if (hosp) orgName = hosp.name;
-    }
+    const lat = latitude ? parseFloat(latitude) : 20.2961;
+    const lng = longitude ? parseFloat(longitude) : 85.8245;
 
     const camp = new BloodCamp({
       title: title.trim(),
-      organizerName: orgName,
-      hospitalId: linkedHospitalId,
+      organizerName: resolvedOrganizerName,
+      hospitalId: validHospitalId,
       venueAddress: venueAddress.trim(),
-      cityId: resolvedCityId,
+      cityId: validCityId,
       cityName: resolvedCityName,
       location: {
         type: 'Point',
@@ -150,10 +146,10 @@ router.post('/', auth, async (req, res) => {
       startDate: new Date(startDate),
       endDate: new Date(endDate),
       targetUnits: parseInt(targetUnits, 10) || 50,
-      contactPhone: contactPhone ? contactPhone.trim() : (req.currentUser ? req.currentUser.mobile : ''),
+      contactPhone: contactPhone ? contactPhone.trim() : '',
       status: 'UPCOMING',
       rsvps: [],
-      createdBy: req.currentUser._id
+      createdBy: req.user ? req.user.id : null
     });
 
     await camp.save();
@@ -179,7 +175,7 @@ router.post('/', auth, async (req, res) => {
 });
 
 // POST /api/camps/:id/rsvp - Toggle donor RSVP ("I'm Attending")
-router.post('/:id/rsvp', auth, async (req, res) => {
+router.post('/:id/rsvp', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -191,7 +187,7 @@ router.post('/:id/rsvp', auth, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Blood donation camp not found' });
     }
 
-    const userId = req.currentUser._id;
+    const userId = req.user.id;
     const existingIndex = (camp.rsvps || []).findIndex(
       r => r.userId && r.userId.toString() === userId.toString()
     );
