@@ -62,6 +62,7 @@ const userSchema = new mongoose.Schema({
   availabilityUpdatedAt: { type: Date, default: Date.now },
   lastActiveAt: { type: Date, default: Date.now },
   lastDonationDate: { type: Date, default: null },
+  cooldownNotified: { type: Boolean, default: false },
   donationsCount: { type: Number, default: 0 },
   karmaPoints: { type: Number, default: 0 },
   badges: [{

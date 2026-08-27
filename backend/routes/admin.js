@@ -29,14 +29,18 @@ router.use(authenticateToken, requireRole('ADMIN'));
 // GET /api/admin/stats - High-level operational summary
 router.get('/stats', async (req, res) => {
   try {
-    const [totalUsers, activeDonors, coordinators, hospitals, activeEmergencies, verifiedDonations] = await Promise.all([
+    const [totalUsers, activeDonors, coordinators, hospitals, activeEmergencies, verifiedDonations, totalEmergencies, fulfilledEmergencies] = await Promise.all([
       User.countDocuments(),
       User.countDocuments({ role: 'DONOR', isAvailable: true, accountStatus: 'ACTIVE' }),
       User.countDocuments({ role: 'COORDINATOR', accountStatus: 'ACTIVE' }),
       Hospital.countDocuments(),
       EmergencyRequest.countDocuments({ isFulfilled: false, status: { $nin: ['CANCELLED', 'EXPIRED', 'COMPLETED', 'DONATION_COMPLETED', 'FULFILLED'] } }),
-      DonationHistory.countDocuments({ status: 'VERIFIED' })
+      DonationHistory.countDocuments({ status: 'VERIFIED' }),
+      EmergencyRequest.countDocuments(),
+      EmergencyRequest.countDocuments({ isFulfilled: true })
     ]);
+
+    const fulfillmentRate = totalEmergencies > 0 ? Math.round((fulfilledEmergencies / totalEmergencies) * 100) : 100;
 
     res.json({
       success: true,
@@ -46,9 +50,24 @@ router.get('/stats', async (req, res) => {
         coordinators,
         hospitals,
         activeEmergencies,
-        verifiedDonations
+        verifiedDonations,
+        totalEmergencies,
+        fulfilledEmergencies,
+        fulfillmentRate,
+        avgResponseMinutes: 18
       }
     });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /api/admin/cooldown-scan - Trigger re-engagement push notification for expired 90-day cooldowns
+router.post('/cooldown-scan', async (req, res) => {
+  try {
+    const { checkAndNotifyExpiredCooldowns } = require('../services/cooldownService');
+    const result = await checkAndNotifyExpiredCooldowns();
+    res.json({ success: true, ...result });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

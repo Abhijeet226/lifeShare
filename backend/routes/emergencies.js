@@ -127,6 +127,33 @@ const handleCreateEmergency = async (req, res) => {
       }
     }
 
+    // Auto-resolve coordinator assigned hospital if requester is coordinator
+    if (!requestData.hospitalId && req.user && req.user.role === 'COORDINATOR') {
+      try {
+        const coordUser = await User.findById(req.user.id);
+        if (coordUser && coordUser.hospitalId) {
+          requestData.hospitalId = coordUser.hospitalId;
+          const hDoc = await Hospital.findById(coordUser.hospitalId);
+          if (hDoc) {
+            requestData.hospital = hDoc.name;
+            requestData.hospitalName = hDoc.name;
+            requestData.hospitalAddress = hDoc.address;
+            requestData.isAuthoritativeHospital = true;
+            if (hDoc.location && hDoc.location.coordinates) {
+              requestData.hospitalLocation = {
+                type: 'Point',
+                coordinates: hDoc.location.coordinates
+              };
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Coordinator hospital lookup error:', e);
+      }
+    }
+
+    requestData.isHospitalVerified = !!(req.body.isHospitalVerified || (req.user && req.user.role === 'COORDINATOR'));
+
     // Manual/Free-text fallback if hospitalId wasn't found or provided
     if (!requestData.hospital) {
       requestData.hospital = (hospital || 'Hospital').trim();

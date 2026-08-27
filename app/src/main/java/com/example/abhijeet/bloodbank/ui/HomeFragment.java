@@ -34,6 +34,12 @@ public class HomeFragment extends Fragment {
     private View btnShareSosWhatsapp;
     private SwipeRefreshLayout swipeRefresh;
 
+    // Interactive Compatibility Matrix Views
+    private TextView chipCompatOneg, chipCompatOpos, chipCompatAneg, chipCompatApos;
+    private TextView chipCompatBneg, chipCompatBpos, chipCompatAbneg, chipCompatAbpos;
+    private TextView tvCompatDonateTo, tvCompatReceiveFrom, tvCompatTraitDesc;
+    private String selectedCompatGroup = "O-";
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -59,6 +65,8 @@ public class HomeFragment extends Fragment {
             tvOperationalTitle = view.findViewById(R.id.tv_home_operational_title);
             tvOperationalSub = view.findViewById(R.id.tv_home_operational_sub);
             btnOpenPortal = view.findViewById(R.id.btn_home_open_portal);
+
+            initCompatibilityMatrix(view);
 
             if (swipeRefresh != null) {
                 swipeRefresh.setColorSchemeResources(R.color.colorPrimary);
@@ -240,6 +248,123 @@ public class HomeFragment extends Fragment {
                     cardOperationalPortal.setVisibility(View.GONE);
                 }
             }
+
+            if (user.getBloodGroup() != null && !user.getBloodGroup().isEmpty()) {
+                selectCompatibilityGroup(user.getBloodGroup());
+            }
+        }
+    }
+
+    private void initCompatibilityMatrix(View view) {
+        chipCompatOneg = view.findViewById(R.id.chip_compat_oneg);
+        chipCompatOpos = view.findViewById(R.id.chip_compat_opos);
+        chipCompatAneg = view.findViewById(R.id.chip_compat_aneg);
+        chipCompatApos = view.findViewById(R.id.chip_compat_apos);
+        chipCompatBneg = view.findViewById(R.id.chip_compat_bneg);
+        chipCompatBpos = view.findViewById(R.id.chip_compat_bpos);
+        chipCompatAbneg = view.findViewById(R.id.chip_compat_abneg);
+        chipCompatAbpos = view.findViewById(R.id.chip_compat_abpos);
+
+        tvCompatDonateTo = view.findViewById(R.id.tv_compat_donate_to);
+        tvCompatReceiveFrom = view.findViewById(R.id.tv_compat_receive_from);
+        tvCompatTraitDesc = view.findViewById(R.id.tv_compat_trait_desc);
+
+        View.OnClickListener clickListener = v -> {
+            int id = v.getId();
+            if (id == R.id.chip_compat_oneg) selectCompatibilityGroup("O-");
+            else if (id == R.id.chip_compat_opos) selectCompatibilityGroup("O+");
+            else if (id == R.id.chip_compat_aneg) selectCompatibilityGroup("A-");
+            else if (id == R.id.chip_compat_apos) selectCompatibilityGroup("A+");
+            else if (id == R.id.chip_compat_bneg) selectCompatibilityGroup("B-");
+            else if (id == R.id.chip_compat_bpos) selectCompatibilityGroup("B+");
+            else if (id == R.id.chip_compat_abneg) selectCompatibilityGroup("AB-");
+            else if (id == R.id.chip_compat_abpos) selectCompatibilityGroup("AB+");
+        };
+
+        if (chipCompatOneg != null) chipCompatOneg.setOnClickListener(clickListener);
+        if (chipCompatOpos != null) chipCompatOpos.setOnClickListener(clickListener);
+        if (chipCompatAneg != null) chipCompatAneg.setOnClickListener(clickListener);
+        if (chipCompatApos != null) chipCompatApos.setOnClickListener(clickListener);
+        if (chipCompatBneg != null) chipCompatBneg.setOnClickListener(clickListener);
+        if (chipCompatBpos != null) chipCompatBpos.setOnClickListener(clickListener);
+        if (chipCompatAbneg != null) chipCompatAbneg.setOnClickListener(clickListener);
+        if (chipCompatAbpos != null) chipCompatAbpos.setOnClickListener(clickListener);
+
+        selectCompatibilityGroup("O-");
+    }
+
+    private void selectCompatibilityGroup(String group) {
+        if (group == null) group = "O-";
+        selectedCompatGroup = group.toUpperCase();
+
+        resetChip(chipCompatOneg, "O-".equals(selectedCompatGroup));
+        resetChip(chipCompatOpos, "O+".equals(selectedCompatGroup));
+        resetChip(chipCompatAneg, "A-".equals(selectedCompatGroup));
+        resetChip(chipCompatApos, "A+".equals(selectedCompatGroup));
+        resetChip(chipCompatBneg, "B-".equals(selectedCompatGroup));
+        resetChip(chipCompatBpos, "B+".equals(selectedCompatGroup));
+        resetChip(chipCompatAbneg, "AB-".equals(selectedCompatGroup));
+        resetChip(chipCompatAbpos, "AB+".equals(selectedCompatGroup));
+
+        if (tvCompatDonateTo == null || tvCompatReceiveFrom == null || tvCompatTraitDesc == null) return;
+
+        switch (selectedCompatGroup) {
+            case "O-":
+                tvCompatDonateTo.setText("All Blood Groups (Universal Red Cell Donor)");
+                tvCompatReceiveFrom.setText("O- only");
+                tvCompatTraitDesc.setText("Universal Red Blood Cell Donor: Essential for emergency trauma when patient blood group is unverified.");
+                break;
+            case "O+":
+                tvCompatDonateTo.setText("O+, A+, B+, AB+");
+                tvCompatReceiveFrom.setText("O+, O-");
+                tvCompatTraitDesc.setText("Most In-Demand Group: Transfused in over 38% of hospital emergency cases.");
+                break;
+            case "A-":
+                tvCompatDonateTo.setText("A-, A+, AB-, AB+");
+                tvCompatReceiveFrom.setText("A-, O-");
+                tvCompatTraitDesc.setText("Rare Negative Group: Vital for oncology, obstetrics and pediatric surgeries.");
+                break;
+            case "A+":
+                tvCompatDonateTo.setText("A+, AB+");
+                tvCompatReceiveFrom.setText("A+, A-, O+, O-");
+                tvCompatTraitDesc.setText("High-Frequency Lifesaver: Constant demand in planned surgeries and ongoing platelet requirements.");
+                break;
+            case "B-":
+                tvCompatDonateTo.setText("B-, B+, AB-, AB+");
+                tvCompatReceiveFrom.setText("B-, O-");
+                tvCompatTraitDesc.setText("Rare Guardian Group: Crucial backup for complex emergency interventions in Odisha.");
+                break;
+            case "B+":
+                tvCompatDonateTo.setText("B+, AB+");
+                tvCompatReceiveFrom.setText("B+, B-, O+, O-");
+                tvCompatTraitDesc.setText("Extremely Active Group: One of the most prevalent and requested groups in India.");
+                break;
+            case "AB-":
+                tvCompatDonateTo.setText("AB-, AB+");
+                tvCompatReceiveFrom.setText("AB-, A-, B-, O-");
+                tvCompatTraitDesc.setText("Rarest Blood Group (<1% of population): Specialized lifesaver for matching patients.");
+                break;
+            case "AB+":
+                tvCompatDonateTo.setText("AB+ only");
+                tvCompatReceiveFrom.setText("All Blood Groups (Universal Red Cell Recipient)");
+                tvCompatTraitDesc.setText("Universal Recipient & Universal Plasma Donor: Your plasma is universally compatible with all patients!");
+                break;
+            default:
+                tvCompatDonateTo.setText("Matching compatible groups");
+                tvCompatReceiveFrom.setText("Matching compatible groups");
+                tvCompatTraitDesc.setText("Consult transfusion medicine guidelines before clinical transfusion.");
+                break;
+        }
+    }
+
+    private void resetChip(TextView chip, boolean isSelected) {
+        if (chip == null || getContext() == null) return;
+        if (isSelected) {
+            chip.setBackgroundResource(R.drawable.bg_chip_pill_selected);
+            chip.setTextColor(Color.WHITE);
+        } else {
+            chip.setBackgroundResource(R.drawable.bg_chip_pill_unselected);
+            chip.setTextColor(Color.parseColor("#757575"));
         }
     }
 }

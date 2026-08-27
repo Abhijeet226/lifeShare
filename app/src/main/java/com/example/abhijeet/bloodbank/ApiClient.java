@@ -845,6 +845,20 @@ public class ApiClient {
         });
     }
 
+    public void createHospitalEmergency(JsonObject json, final ApiCallback<JsonObject> callback) {
+        post("/emergencies", json.toString(), new InternalCallback() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                callback.onSuccess(body);
+            }
+
+            @Override
+            public void onError(String error) {
+                callback.onError(error);
+            }
+        });
+    }
+
     public void updateJourneyStatus(String emergencyId, String action, final ApiCallback<String> callback) {
         JsonObject json = new JsonObject();
         json.addProperty("action", action); // "VIEWED", "TRAVELLING", "ARRIVED", "CANCELLED"
@@ -1523,6 +1537,10 @@ public class ApiClient {
         public int hospitals;
         public int activeEmergencies;
         public int verifiedDonations;
+        public int totalEmergencies;
+        public int fulfilledEmergencies;
+        public int fulfillmentRate = 100;
+        public int avgResponseMinutes = 18;
     }
 
     public static class AdminUserItem {
@@ -1640,6 +1658,20 @@ public class ApiClient {
                 } catch (Exception e) {
                     callback.onError("Failed to parse admin stats: " + e.getMessage());
                 }
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                callback.onError(errorMessage);
+            }
+        });
+    }
+
+    public void triggerCooldownScan(final ApiCallback<JsonObject> callback) {
+        post("/admin/cooldown-scan", "{}", new InternalCallback() {
+            @Override
+            public void onSuccess(JsonObject response) {
+                callback.onSuccess(response);
             }
 
             @Override

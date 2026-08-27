@@ -62,6 +62,21 @@
                             android:textSize="12sp" />
                     </LinearLayout>
 
+                    <!-- Create Hospital Emergency SOS Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_coord_post_sos"
+                        style="@style/Widget.LifeShare.Button.Primary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="38dp"
+                        android:layout_marginEnd="6dp"
+                        android:paddingHorizontal="10dp"
+                        android:text="+ SOS"
+                        android:textSize="11sp"
+                        app:cornerRadius="12dp"
+                        app:icon="@drawable/ic_emergency_sos"
+                        app:iconPadding="4dp"
+                        app:iconSize="14dp" />
+
                     <!-- Switch to Donor App Button -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_coord_switch_to_donor"

@@ -50,6 +50,8 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private SwipeRefreshLayout swipeRefresh;
     private NestedScrollView scrollContent;
     private TextView tvStatUsers, tvStatDonors, tvStatHospitals, tvStatDonations;
+    private TextView tvStatFulfillment, tvStatResponseTime;
+    private MaterialButton btnAdminScanCooldown;
     private TextView tvSectionTitle;
     private MaterialButton btnAddHospital, btnSwitchToDonor;
     private FrameLayout btnAdminProfile, btnAdminScanQr;
@@ -121,6 +123,10 @@ public class AdminDashboardActivity extends AppCompatActivity {
         tvStatDonors = findViewById(R.id.tv_stat_donors);
         tvStatHospitals = findViewById(R.id.tv_stat_hospitals);
         tvStatDonations = findViewById(R.id.tv_stat_donations);
+
+        tvStatFulfillment = findViewById(R.id.tv_stat_fulfillment);
+        tvStatResponseTime = findViewById(R.id.tv_stat_response_time);
+        btnAdminScanCooldown = findViewById(R.id.btn_admin_scan_cooldown);
 
         tvSectionTitle = findViewById(R.id.tv_admin_current_section_title);
         btnAddHospital = findViewById(R.id.btn_admin_add_hospital);
@@ -204,6 +210,27 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     showRegisterHospitalDialog();
+                }
+            });
+        }
+
+        if (btnAdminScanCooldown != null) {
+            btnAdminScanCooldown.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Toast.makeText(AdminDashboardActivity.this, "Scanning donors for 90-day cooldown completion...", Toast.LENGTH_SHORT).show();
+                    apiClient.triggerCooldownScan(new ApiClient.ApiCallback<JsonObject>() {
+                        @Override
+                        public void onSuccess(JsonObject result) {
+                            int count = result.has("notifiedCount") ? result.get("notifiedCount").getAsInt() : 0;
+                            Toast.makeText(AdminDashboardActivity.this, "Cooldown Scan Complete: " + count + " eligible donors notified!", Toast.LENGTH_LONG).show();
+                        }
+
+                        @Override
+                        public void onError(String errorMessage) {
+                            Toast.makeText(AdminDashboardActivity.this, "Scan failed: " + errorMessage, Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 }
             });
         }
@@ -414,6 +441,8 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 if (tvStatDonors != null) tvStatDonors.setText(String.valueOf(stats.activeDonors));
                 if (tvStatHospitals != null) tvStatHospitals.setText(String.valueOf(stats.hospitals));
                 if (tvStatDonations != null) tvStatDonations.setText(String.valueOf(stats.verifiedDonations));
+                if (tvStatFulfillment != null) tvStatFulfillment.setText("Fulfillment: " + stats.fulfillmentRate + "%");
+                if (tvStatResponseTime != null) tvStatResponseTime.setText("Avg: " + stats.avgResponseMinutes + " mins");
             }
 
             @Override

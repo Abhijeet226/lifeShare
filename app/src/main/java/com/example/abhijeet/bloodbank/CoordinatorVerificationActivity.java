@@ -43,7 +43,7 @@ public class CoordinatorVerificationActivity extends AppCompatActivity {
     private LinearLayout layoutEmpty, containerDonors;
     private View layoutCoordSkeleton;
     private TextView tvEmptyMessage;
-    private MaterialButton btnScanDonorQr, btnEnrollWalkin, btnSwitchToDonor;
+    private MaterialButton btnScanDonorQr, btnEnrollWalkin, btnCoordPostSos, btnSwitchToDonor;
     private FrameLayout btnCoordinatorProfile;
 
     // Floating Bottom Bar Views
@@ -145,6 +145,7 @@ public class CoordinatorVerificationActivity extends AppCompatActivity {
 
         btnScanDonorQr = findViewById(R.id.btn_scan_donor_qr);
         btnEnrollWalkin = findViewById(R.id.btn_coord_enroll_walkin);
+        btnCoordPostSos = findViewById(R.id.btn_coord_post_sos);
         btnSwitchToDonor = findViewById(R.id.btn_coord_switch_to_donor);
         btnCoordinatorProfile = findViewById(R.id.btn_coordinator_profile);
 
@@ -205,6 +206,15 @@ public class CoordinatorVerificationActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     showEnrollWalkinDialog();
+                }
+            });
+        }
+
+        if (btnCoordPostSos != null) {
+            btnCoordPostSos.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showCreateHospitalSosDialog();
                 }
             });
         }
@@ -706,6 +716,87 @@ public class CoordinatorVerificationActivity extends AppCompatActivity {
                     public void onError(String errorMessage) {
                         if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
                         Toast.makeText(CoordinatorVerificationActivity.this, "Enrollment failed: " + errorMessage, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            });
+        }
+
+        dialog.show();
+    }
+
+    private void showCreateHospitalSosDialog() {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_coordinator_create_emergency, null);
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .setCancelable(true)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+
+        final EditText etPatient = dialogView.findViewById(R.id.et_coord_sos_patient);
+        final EditText etBloodGroup = dialogView.findViewById(R.id.et_coord_sos_blood_group);
+        final EditText etUnits = dialogView.findViewById(R.id.et_coord_sos_units);
+        final EditText etWard = dialogView.findViewById(R.id.et_coord_sos_ward);
+        View btnCancel = dialogView.findViewById(R.id.btn_cancel_coord_sos);
+        View btnSubmit = dialogView.findViewById(R.id.btn_submit_coord_sos);
+
+        if (btnCancel != null) {
+            btnCancel.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        if (btnSubmit != null) {
+            btnSubmit.setOnClickListener(v -> {
+                String patient = etPatient != null ? etPatient.getText().toString().trim() : "";
+                String blood = etBloodGroup != null ? etBloodGroup.getText().toString().trim().toUpperCase() : "";
+                String unitsStr = etUnits != null ? etUnits.getText().toString().trim() : "1";
+                String ward = etWard != null ? etWard.getText().toString().trim() : "";
+
+                if (patient.isEmpty()) {
+                    if (etPatient != null) etPatient.setError("Patient tag required");
+                    return;
+                }
+                if (blood.isEmpty()) {
+                    if (etBloodGroup != null) etBloodGroup.setError("Blood group required");
+                    return;
+                }
+
+                int units = 1;
+                try {
+                    units = Integer.parseInt(unitsStr);
+                } catch (Exception ignored) {}
+
+                dialog.dismiss();
+                if (swipeRefresh != null) swipeRefresh.setRefreshing(true);
+
+                UserProfile currentUser = DataManager.getInstance(CoordinatorVerificationActivity.this).getCurrentUser();
+                String hospitalName = currentUser != null && currentUser.getHospitalName() != null ? currentUser.getHospitalName() : "Hospital Casualty Desk";
+                String contact = currentUser != null && currentUser.getMobile() != null ? currentUser.getMobile() : "108";
+                String city = currentUser != null && currentUser.getCity() != null ? currentUser.getCity() : "Bhubaneswar";
+
+                JsonObject json = new JsonObject();
+                json.addProperty("patientName", patient + (ward.isEmpty() ? "" : " (" + ward + ")"));
+                json.addProperty("bloodGroup", blood);
+                json.addProperty("unitsRequired", units);
+                json.addProperty("urgency", "CRITICAL");
+                json.addProperty("hospital", hospitalName);
+                json.addProperty("contactNumber", contact);
+                json.addProperty("city", city);
+                json.addProperty("isHospitalVerified", true);
+
+                apiClient.createHospitalEmergency(json, new ApiClient.ApiCallback<JsonObject>() {
+                    @Override
+                    public void onSuccess(JsonObject result) {
+                        if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
+                        Toast.makeText(CoordinatorVerificationActivity.this, "Hospital Emergency Broadcasted! Proximity radar activated.", Toast.LENGTH_LONG).show();
+                        switchTab(CoordTab.EMERGENCIES);
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
+                        Toast.makeText(CoordinatorVerificationActivity.this, "Failed to broadcast SOS: " + errorMessage, Toast.LENGTH_SHORT).show();
                     }
                 });
             });

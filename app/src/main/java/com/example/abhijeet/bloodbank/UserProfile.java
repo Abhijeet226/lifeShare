@@ -384,4 +384,23 @@ public class UserProfile {
     public void setBadges(java.util.List<ApiClient.DonorBadge> badges) {
         this.badges = badges != null ? badges : new java.util.ArrayList<ApiClient.DonorBadge>();
     }
+
+    private String hospitalName = "";
+    private String hospitalId = "";
+
+    public String getHospitalName() {
+        return hospitalName != null ? hospitalName : "";
+    }
+
+    public void setHospitalName(String hospitalName) {
+        this.hospitalName = hospitalName;
+    }
+
+    public String getHospitalId() {
+        return hospitalId != null ? hospitalId : "";
+    }
+
+    public void setHospitalId(String hospitalId) {
+        this.hospitalId = hospitalId;
+    }
 }

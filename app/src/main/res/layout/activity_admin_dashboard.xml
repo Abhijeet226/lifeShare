@@ -286,6 +286,69 @@
                     </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>
 
+                <!-- City Response & Cooldown Re-engagement Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <!-- Fulfillment Pill -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="34dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_segmented_pill_container"
+                        android:gravity="center"
+                        android:paddingHorizontal="8dp">
+
+                        <TextView
+                            android:id="@+id/tv_stat_fulfillment"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Fulfillment: 98%"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Avg Response Pill -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="34dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_segmented_pill_container"
+                        android:gravity="center"
+                        android:paddingHorizontal="8dp">
+
+                        <TextView
+                            android:id="@+id/tv_stat_response_time"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Avg: 18 mins"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Cooldown Scanner Action Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_admin_scan_cooldown"
+                        style="@style/Widget.LifeShare.Button.Tonal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="34dp"
+                        android:paddingHorizontal="10dp"
+                        android:text="Scan 90d"
+                        android:textSize="11sp"
+                        app:cornerRadius="12dp"
+                        app:icon="@drawable/ic_cooldown"
+                        app:iconPadding="4dp"
+                        app:iconSize="13dp" />
+                </LinearLayout>
+
                 <!-- 3. Section Title & Action Button -->
                 <LinearLayout
                     android:layout_width="match_parent"
