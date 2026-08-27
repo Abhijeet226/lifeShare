@@ -51,7 +51,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private NestedScrollView scrollContent;
     private TextView tvStatUsers, tvStatDonors, tvStatHospitals, tvStatDonations;
     private TextView tvStatFulfillment, tvStatResponseTime;
-    private MaterialButton btnAdminScanCooldown;
+    private MaterialButton btnAdminScanCooldown, btnAdminExportCsv, btnAdminScheduleCamp;
     private TextView tvSectionTitle;
     private MaterialButton btnAddHospital, btnSwitchToDonor;
     private FrameLayout btnAdminProfile, btnAdminScanQr;
@@ -127,6 +127,8 @@ public class AdminDashboardActivity extends AppCompatActivity {
         tvStatFulfillment = findViewById(R.id.tv_stat_fulfillment);
         tvStatResponseTime = findViewById(R.id.tv_stat_response_time);
         btnAdminScanCooldown = findViewById(R.id.btn_admin_scan_cooldown);
+        btnAdminExportCsv = findViewById(R.id.btn_admin_export_csv);
+        btnAdminScheduleCamp = findViewById(R.id.btn_admin_schedule_camp);
 
         tvSectionTitle = findViewById(R.id.tv_admin_current_section_title);
         btnAddHospital = findViewById(R.id.btn_admin_add_hospital);
@@ -235,6 +237,24 @@ public class AdminDashboardActivity extends AppCompatActivity {
             });
         }
 
+        if (btnAdminExportCsv != null) {
+            btnAdminExportCsv.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showExportReportsDialog();
+                }
+            });
+        }
+
+        if (btnAdminScheduleCamp != null) {
+            btnAdminScheduleCamp.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showAdminScheduleCampDialog();
+                }
+            });
+        }
+
         // Floating Bottom Bar Tab Selection
         tabNavUsers.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -322,6 +342,153 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 scrollIdleHandler.postDelayed(revealBottomBarRunnable, 500);
             }
         });
+    }
+
+    private void showExportReportsDialog() {
+        final String[] reports = {
+                "Verified Donations Ledger (.csv)",
+                "Hospital Operational Directory (.csv)"
+        };
+
+        new AlertDialog.Builder(this)
+                .setTitle("Export Compliance Reports")
+                .setItems(reports, (dialog, which) -> {
+                    if (which == 0) {
+                        downloadAndShareReport("/admin/export/donations.csv", "lifeshare_verified_donations.csv");
+                    } else if (which == 1) {
+                        downloadAndShareReport("/admin/export/hospitals.csv", "lifeshare_hospitals_directory.csv");
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void downloadAndShareReport(String endpoint, final String fileName) {
+        if (swipeRefresh != null) swipeRefresh.setRefreshing(true);
+        Toast.makeText(this, "Generating " + fileName + "...", Toast.LENGTH_SHORT).show();
+
+        apiClient.downloadExportCsv(endpoint, new ApiClient.ApiCallback<String>() {
+            @Override
+            public void onSuccess(String csvContent) {
+                if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
+                try {
+                    java.io.File file = new java.io.File(getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS), fileName);
+                    java.io.FileOutputStream fos = new java.io.FileOutputStream(file);
+                    fos.write(csvContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    fos.flush();
+                    fos.close();
+
+                    android.net.Uri fileUri = androidx.core.content.FileProvider.getUriForFile(
+                            AdminDashboardActivity.this,
+                            getPackageName() + ".provider",
+                            file
+                    );
+
+                    Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                    shareIntent.setType("text/csv");
+                    shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
+                    shareIntent.putExtra(Intent.EXTRA_SUBJECT, "LifeShare Compliance Report - " + fileName);
+                    shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    startActivity(Intent.createChooser(shareIntent, "Share " + fileName));
+                } catch (Exception e) {
+                    Intent textShare = new Intent(Intent.ACTION_SEND);
+                    textShare.setType("text/plain");
+                    textShare.putExtra(Intent.EXTRA_TEXT, csvContent);
+                    textShare.putExtra(Intent.EXTRA_SUBJECT, fileName);
+                    startActivity(Intent.createChooser(textShare, "Export " + fileName));
+                }
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
+                Toast.makeText(AdminDashboardActivity.this, "Export failed: " + errorMessage, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void showAdminScheduleCampDialog() {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_create_blood_camp, null);
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+
+        final com.google.android.material.textfield.TextInputEditText etTitle = dialogView.findViewById(R.id.et_camp_title);
+        final com.google.android.material.textfield.TextInputEditText etOrg = dialogView.findViewById(R.id.et_camp_organizer);
+        final com.google.android.material.textfield.TextInputEditText etVenue = dialogView.findViewById(R.id.et_camp_venue);
+        final com.google.android.material.textfield.TextInputEditText etTarget = dialogView.findViewById(R.id.et_camp_target_units);
+        final com.google.android.material.textfield.TextInputEditText etPhone = dialogView.findViewById(R.id.et_camp_contact_phone);
+        MaterialButton btnSubmit = dialogView.findViewById(R.id.btn_camp_submit);
+        FrameLayout btnClose = dialogView.findViewById(R.id.btn_create_camp_close);
+
+        if (etOrg != null) etOrg.setText("State Blood Transfusion Council");
+        if (etPhone != null) etPhone.setText("+91 9999999999");
+
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        if (btnSubmit != null) {
+            btnSubmit.setOnClickListener(v -> {
+                String title = etTitle != null && etTitle.getText() != null ? etTitle.getText().toString().trim() : "";
+                String org = etOrg != null && etOrg.getText() != null ? etOrg.getText().toString().trim() : "LifeShare";
+                String venue = etVenue != null && etVenue.getText() != null ? etVenue.getText().toString().trim() : "";
+                String targetStr = etTarget != null && etTarget.getText() != null ? etTarget.getText().toString().trim() : "100";
+                String phone = etPhone != null && etPhone.getText() != null ? etPhone.getText().toString().trim() : "";
+
+                if (title.isEmpty()) {
+                    if (etTitle != null) etTitle.setError("Camp title is required");
+                    return;
+                }
+                if (venue.isEmpty()) {
+                    if (etVenue != null) etVenue.setError("Venue address is required");
+                    return;
+                }
+
+                int targetUnits = 100;
+                try {
+                    targetUnits = Integer.parseInt(targetStr);
+                } catch (Exception ignored) {}
+
+                dialog.dismiss();
+                if (swipeRefresh != null) swipeRefresh.setRefreshing(true);
+
+                JsonObject json = new JsonObject();
+                json.addProperty("title", title);
+                json.addProperty("organizerName", org);
+                json.addProperty("venueAddress", venue);
+                json.addProperty("targetUnits", targetUnits);
+                json.addProperty("contactPhone", phone);
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US);
+                java.util.Calendar cal = java.util.Calendar.getInstance();
+                cal.add(java.util.Calendar.DAY_OF_YEAR, 4);
+                cal.set(java.util.Calendar.HOUR_OF_DAY, 9);
+                cal.set(java.util.Calendar.MINUTE, 0);
+                json.addProperty("startDate", sdf.format(cal.getTime()));
+                cal.set(java.util.Calendar.HOUR_OF_DAY, 17);
+                json.addProperty("endDate", sdf.format(cal.getTime()));
+
+                apiClient.createBloodCamp(json, new ApiClient.ApiCallback<JsonObject>() {
+                    @Override
+                    public void onSuccess(JsonObject result) {
+                        if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
+                        Toast.makeText(AdminDashboardActivity.this, "State Blood Donation Camp Published!", Toast.LENGTH_LONG).show();
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
+                        Toast.makeText(AdminDashboardActivity.this, "Failed to schedule camp: " + errorMessage, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            });
+        }
+
+        dialog.show();
     }
 
     private void showAdminAccountDialog() {

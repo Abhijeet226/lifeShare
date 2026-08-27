@@ -1647,6 +1647,27 @@ public class ApiClient {
         public String createdAt;
     }
 
+    public static class BloodCampItem {
+        public String id;
+        public String title;
+        public String organizerName;
+        public String hospitalName;
+        public String hospitalId;
+        public String venueAddress;
+        public String cityName;
+        public String cityId;
+        public double latitude;
+        public double longitude;
+        public String startDate;
+        public String endDate;
+        public int targetUnits;
+        public int collectedUnits;
+        public String contactPhone;
+        public String status;
+        public int rsvpCount;
+        public boolean isUserRsvped;
+    }
+
     public void getAdminStats(final ApiCallback<AdminStats> callback) {
         get("/admin/stats", new InternalCallback() {
             @Override
@@ -2040,6 +2061,101 @@ public class ApiClient {
             @Override
             public void onError(String error) {
                 callback.onError(error);
+            }
+        });
+    }
+
+    public void getBloodCamps(String cityId, String status, final ApiCallback<List<BloodCampItem>> callback) {
+        StringBuilder query = new StringBuilder("/camps?");
+        if (cityId != null && !cityId.trim().isEmpty()) {
+            query.append("cityId=").append(cityId.trim()).append("&");
+        }
+        if (status != null && !status.trim().isEmpty()) {
+            query.append("status=").append(status.trim().toUpperCase());
+        }
+
+        get(query.toString(), new InternalCallback() {
+            @Override
+            public void onSuccess(JsonObject response) {
+                try {
+                    List<BloodCampItem> list = new ArrayList<>();
+                    if (response.has("camps") && response.get("camps").isJsonArray()) {
+                        for (JsonElement el : response.getAsJsonArray("camps")) {
+                            BloodCampItem item = gson.fromJson(el, BloodCampItem.class);
+                            if (item != null) list.add(item);
+                        }
+                    }
+                    callback.onSuccess(list);
+                } catch (Exception e) {
+                    callback.onError("Failed to parse donation camps: " + e.getMessage());
+                }
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                callback.onError(errorMessage);
+            }
+        });
+    }
+
+    public void createBloodCamp(JsonObject campData, final ApiCallback<JsonObject> callback) {
+        post("/camps", campData.toString(), new InternalCallback() {
+            @Override
+            public void onSuccess(JsonObject response) {
+                callback.onSuccess(response);
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                callback.onError(errorMessage);
+            }
+        });
+    }
+
+    public void toggleCampRsvp(String campId, final ApiCallback<JsonObject> callback) {
+        post("/camps/" + campId + "/rsvp", "{}", new InternalCallback() {
+            @Override
+            public void onSuccess(JsonObject response) {
+                callback.onSuccess(response);
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                callback.onError(errorMessage);
+            }
+        });
+    }
+
+    public void downloadExportCsv(String endpoint, final ApiCallback<String> callback) {
+        Request request = newAuthenticatedBuilder()
+                .url(baseUrl + endpoint)
+                .get()
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull final IOException e) {
+                mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.onError("Failed to download report: " + e.getMessage());
+                    }
+                });
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull final Response response) throws IOException {
+                final String csvData = response.body() != null ? response.body().string() : "";
+                mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (response.isSuccessful() && !csvData.isEmpty()) {
+                            callback.onSuccess(csvData);
+                        } else {
+                            callback.onError("Failed to generate CSV report (Code " + response.code() + ")");
+                        }
+                    }
+                });
             }
         });
     }

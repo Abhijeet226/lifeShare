@@ -26,6 +26,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.gson.JsonObject;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
@@ -43,7 +44,7 @@ public class CoordinatorVerificationActivity extends AppCompatActivity {
     private LinearLayout layoutEmpty, containerDonors;
     private View layoutCoordSkeleton;
     private TextView tvEmptyMessage;
-    private MaterialButton btnScanDonorQr, btnEnrollWalkin, btnCoordPostSos, btnSwitchToDonor;
+    private MaterialButton btnScanDonorQr, btnEnrollWalkin, btnCoordPostSos, btnCoordScheduleCamp, btnSwitchToDonor;
     private FrameLayout btnCoordinatorProfile;
 
     // Floating Bottom Bar Views
@@ -146,6 +147,7 @@ public class CoordinatorVerificationActivity extends AppCompatActivity {
         btnScanDonorQr = findViewById(R.id.btn_scan_donor_qr);
         btnEnrollWalkin = findViewById(R.id.btn_coord_enroll_walkin);
         btnCoordPostSos = findViewById(R.id.btn_coord_post_sos);
+        btnCoordScheduleCamp = findViewById(R.id.btn_coord_schedule_camp);
         btnSwitchToDonor = findViewById(R.id.btn_coord_switch_to_donor);
         btnCoordinatorProfile = findViewById(R.id.btn_coordinator_profile);
 
@@ -215,6 +217,15 @@ public class CoordinatorVerificationActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     showCreateHospitalSosDialog();
+                }
+            });
+        }
+
+        if (btnCoordScheduleCamp != null) {
+            btnCoordScheduleCamp.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showScheduleCampDialog();
                 }
             });
         }
@@ -797,6 +808,95 @@ public class CoordinatorVerificationActivity extends AppCompatActivity {
                     public void onError(String errorMessage) {
                         if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
                         Toast.makeText(CoordinatorVerificationActivity.this, "Failed to broadcast SOS: " + errorMessage, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            });
+        }
+
+        dialog.show();
+    }
+
+    private void showScheduleCampDialog() {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_create_blood_camp, null);
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+
+        final TextInputEditText etTitle = dialogView.findViewById(R.id.et_camp_title);
+        final TextInputEditText etOrg = dialogView.findViewById(R.id.et_camp_organizer);
+        final TextInputEditText etVenue = dialogView.findViewById(R.id.et_camp_venue);
+        final TextInputEditText etTarget = dialogView.findViewById(R.id.et_camp_target_units);
+        final TextInputEditText etPhone = dialogView.findViewById(R.id.et_camp_contact_phone);
+        MaterialButton btnSubmit = dialogView.findViewById(R.id.btn_camp_submit);
+        FrameLayout btnClose = dialogView.findViewById(R.id.btn_create_camp_close);
+
+        UserProfile currentUser = DataManager.getInstance(this).getCurrentUser();
+        String hospName = currentUser != null && currentUser.getHospitalName() != null ? currentUser.getHospitalName() : "Hospital Blood Bank";
+        if (etOrg != null) etOrg.setText(hospName);
+        if (currentUser != null && currentUser.getMobile() != null && etPhone != null) {
+            etPhone.setText(currentUser.getMobile());
+        }
+
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        if (btnSubmit != null) {
+            btnSubmit.setOnClickListener(v -> {
+                String title = etTitle != null && etTitle.getText() != null ? etTitle.getText().toString().trim() : "";
+                String org = etOrg != null && etOrg.getText() != null ? etOrg.getText().toString().trim() : hospName;
+                String venue = etVenue != null && etVenue.getText() != null ? etVenue.getText().toString().trim() : "";
+                String targetStr = etTarget != null && etTarget.getText() != null ? etTarget.getText().toString().trim() : "50";
+                String phone = etPhone != null && etPhone.getText() != null ? etPhone.getText().toString().trim() : "";
+
+                if (title.isEmpty()) {
+                    if (etTitle != null) etTitle.setError("Camp title is required");
+                    return;
+                }
+                if (venue.isEmpty()) {
+                    if (etVenue != null) etVenue.setError("Venue address is required");
+                    return;
+                }
+
+                int targetUnits = 50;
+                try {
+                    targetUnits = Integer.parseInt(targetStr);
+                } catch (Exception ignored) {}
+
+                dialog.dismiss();
+                if (swipeRefresh != null) swipeRefresh.setRefreshing(true);
+
+                JsonObject json = new JsonObject();
+                json.addProperty("title", title);
+                json.addProperty("organizerName", org);
+                json.addProperty("venueAddress", venue);
+                json.addProperty("targetUnits", targetUnits);
+                json.addProperty("contactPhone", phone);
+                // Schedule for upcoming Saturday / default dates
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US);
+                java.util.Calendar cal = java.util.Calendar.getInstance();
+                cal.add(java.util.Calendar.DAY_OF_YEAR, 3);
+                cal.set(java.util.Calendar.HOUR_OF_DAY, 9);
+                cal.set(java.util.Calendar.MINUTE, 0);
+                json.addProperty("startDate", sdf.format(cal.getTime()));
+                cal.set(java.util.Calendar.HOUR_OF_DAY, 17);
+                json.addProperty("endDate", sdf.format(cal.getTime()));
+
+                apiClient.createBloodCamp(json, new ApiClient.ApiCallback<JsonObject>() {
+                    @Override
+                    public void onSuccess(JsonObject result) {
+                        if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
+                        Toast.makeText(CoordinatorVerificationActivity.this, "Blood Donation Camp Scheduled & Published!", Toast.LENGTH_LONG).show();
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
+                        Toast.makeText(CoordinatorVerificationActivity.this, "Failed to schedule camp: " + errorMessage, Toast.LENGTH_SHORT).show();
                     }
                 });
             });

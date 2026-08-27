@@ -13,6 +13,7 @@ const bloodBankRoutes = require('./routes/bloodbanks');
 const donationRoutes = require('./routes/donations');
 const cityRoutes = require('./routes/cities');
 const adminRoutes = require('./routes/admin');
+const campRoutes = require('./routes/camps');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -33,6 +34,7 @@ app.use('/api/bloodbanks', bloodBankRoutes);
 app.use('/api/donations', donationRoutes);
 app.use('/api/cities', cityRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/camps', campRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -1077,4 +1077,108 @@ router.get('/audit-logs', async (req, res) => {
   }
 });
 
+// Helper for CSV cell escaping
+function escapeCsv(field) {
+  if (field === null || field === undefined) return '""';
+  const str = String(field).replace(/"/g, '""');
+  return `"${str}"`;
+}
+
+// GET /api/admin/export/donations.csv - Export verified donations ledger
+router.get('/export/donations.csv', async (req, res) => {
+  try {
+    const donations = await DonationHistory.find({ status: 'VERIFIED' })
+      .populate('userId', 'name email mobile bloodGroup donorId')
+      .populate('coordinatorId', 'name email')
+      .sort({ verifiedAt: -1, donationDate: -1 })
+      .lean();
+
+    const headers = [
+      'Certificate ID',
+      'Donor Name',
+      'Donor ID',
+      'Blood Group',
+      'Donor Phone',
+      'Donor Email',
+      'Hospital',
+      'Attending Doctor',
+      'Units Donated',
+      'Donation Date',
+      'Verified Date',
+      'Coordinator Name',
+      'Cryptographic HMAC Signature'
+    ];
+
+    const rows = donations.map(d => [
+      escapeCsv(d.certificateId || d._id),
+      escapeCsv(d.donorName || (d.userId ? d.userId.name : 'Unknown')),
+      escapeCsv(d.donorId || (d.userId ? d.userId.donorId : '')),
+      escapeCsv(d.bloodGroup || (d.userId ? d.userId.bloodGroup : 'O+')),
+      escapeCsv(d.userId ? d.userId.mobile : ''),
+      escapeCsv(d.userId ? d.userId.email : ''),
+      escapeCsv(d.hospital || 'Hospital Casualty Desk'),
+      escapeCsv(d.doctorName || 'Attending Physician'),
+      escapeCsv(d.unitsDonated || 1),
+      escapeCsv(d.donationDate ? new Date(d.donationDate).toISOString().split('T')[0] : ''),
+      escapeCsv(d.verifiedAt ? new Date(d.verifiedAt).toISOString().split('T')[0] : ''),
+      escapeCsv(d.coordinatorName || (d.coordinatorId ? d.coordinatorId.name : '')),
+      escapeCsv(d.certificateHash || '')
+    ].join(','));
+
+    const csvContent = [headers.join(','), ...rows].join('\r\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="lifeshare_verified_donations.csv"');
+    res.status(200).send(csvContent);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// GET /api/admin/export/hospitals.csv - Export hospital operations directory
+router.get('/export/hospitals.csv', async (req, res) => {
+  try {
+    const hospitals = await Hospital.find()
+      .populate('cityId', 'name stateName')
+      .populate('authorizedCoordinatorIds', 'name email mobile accountStatus')
+      .sort({ name: 1 })
+      .lean();
+
+    const headers = [
+      'Hospital ID',
+      'Hospital Name',
+      'Address',
+      'City',
+      'State',
+      'Contact Phone',
+      'Emergency Support',
+      'Active Coordinators Count',
+      'Coordinators List'
+    ];
+
+    const rows = hospitals.map(h => {
+      const coords = (h.authorizedCoordinatorIds || []).map(c => `${c.name} (${c.email || c.mobile})`).join('; ');
+      return [
+        escapeCsv(h._id),
+        escapeCsv(h.name),
+        escapeCsv(h.address),
+        escapeCsv(h.cityId ? h.cityId.name : 'Bhubaneswar'),
+        escapeCsv(h.cityId ? h.cityId.stateName : 'Odisha'),
+        escapeCsv(h.phone || ''),
+        escapeCsv(h.emergencySupport !== false ? 'YES' : 'NO'),
+        escapeCsv((h.authorizedCoordinatorIds || []).length),
+        escapeCsv(coords)
+      ].join(',');
+    });
+
+    const csvContent = [headers.join(','), ...rows].join('\r\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="lifeshare_hospitals_directory.csv"');
+    res.status(200).send(csvContent);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;

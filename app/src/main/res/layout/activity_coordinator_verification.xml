@@ -77,6 +77,21 @@
                         app:iconPadding="4dp"
                         app:iconSize="14dp" />
 
+                    <!-- Schedule Donation Drive / Camp Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_coord_schedule_camp"
+                        style="@style/Widget.LifeShare.Button.Tonal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="38dp"
+                        android:layout_marginEnd="6dp"
+                        android:paddingHorizontal="10dp"
+                        android:text="+ Camp"
+                        android:textSize="11sp"
+                        app:cornerRadius="12dp"
+                        app:icon="@drawable/ic_hospital"
+                        app:iconPadding="4dp"
+                        app:iconSize="13dp" />
+
                     <!-- Switch to Donor App Button -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_coord_switch_to_donor"

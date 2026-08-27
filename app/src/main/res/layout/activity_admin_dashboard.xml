@@ -349,6 +349,47 @@
                         app:iconSize="13dp" />
                 </LinearLayout>
 
+                <!-- Admin Compliance & Drive Operations Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <!-- Export Reports Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_admin_export_csv"
+                        style="@style/Widget.LifeShare.Button.Tonal"
+                        android:layout_width="0dp"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:paddingHorizontal="8dp"
+                        android:text="Export CSV"
+                        android:textSize="11sp"
+                        app:cornerRadius="12dp"
+                        app:icon="@drawable/ic_nav_share"
+                        app:iconPadding="4dp"
+                        app:iconSize="13dp" />
+
+                    <!-- Schedule Camp Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_admin_schedule_camp"
+                        style="@style/Widget.LifeShare.Button.Tonal"
+                        android:layout_width="0dp"
+                        android:layout_height="36dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:paddingHorizontal="8dp"
+                        android:text="+ Camp Drive"
+                        android:textSize="11sp"
+                        app:cornerRadius="12dp"
+                        app:icon="@drawable/ic_hospital"
+                        app:iconPadding="4dp"
+                        app:iconSize="13dp" />
+                </LinearLayout>
+
                 <!-- 3. Section Title & Action Button -->
                 <LinearLayout
                     android:layout_width="match_parent"

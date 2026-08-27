@@ -1,12 +1,18 @@
 package com.example.abhijeet.bloodbank.ui;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,12 +27,15 @@ import com.example.abhijeet.bloodbank.LogInActivity;
 import com.example.abhijeet.bloodbank.R;
 import com.example.abhijeet.bloodbank.UserProfile;
 import com.google.android.material.button.MaterialButton;
+import com.google.gson.JsonObject;
+
+import java.util.List;
 
 public class HomeFragment extends Fragment {
 
     private TextView tvGreeting, tvUserName, tvUserBg, tvAvailabilityText, tvTrustBadge;
     private TextView tvEligibilityTitle, tvEligibilitySub;
-    private View cardHomeSos, cardFindDonors, cardHomeCooldown, btnToggleStatus;
+    private View cardHomeSos, cardFindDonors, cardHomeCamps, cardHomeCooldown, btnToggleStatus;
     private View cardOperationalPortal;
     private TextView tvOperationalTitle, tvOperationalSub;
     private MaterialButton btnOpenPortal;
@@ -55,6 +64,7 @@ public class HomeFragment extends Fragment {
             tvEligibilitySub = view.findViewById(R.id.tv_home_eligibility_sub);
             cardHomeSos = view.findViewById(R.id.card_home_sos);
             cardFindDonors = view.findViewById(R.id.card_home_find_donors);
+            cardHomeCamps = view.findViewById(R.id.card_home_camps);
             cardHomeCooldown = view.findViewById(R.id.card_home_cooldown);
             btnPostSos = view.findViewById(R.id.btn_home_post_sos);
             btnToggleStatus = view.findViewById(R.id.btn_home_toggle_status);
@@ -118,6 +128,14 @@ public class HomeFragment extends Fragment {
 
         if (cardFindDonors != null) cardFindDonors.setOnClickListener(goToSearch);
         if (cardHomeSos != null) cardHomeSos.setOnClickListener(goToEmergency);
+        if (cardHomeCamps != null) {
+            cardHomeCamps.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showBloodCampsDialog();
+                }
+            });
+        }
         if (cardHomeCooldown != null) cardHomeCooldown.setOnClickListener(goToProfile);
         if (btnPostSos != null) btnPostSos.setOnClickListener(goToEmergency);
         if (btnToggleStatus != null) btnToggleStatus.setOnClickListener(goToProfile);
@@ -366,5 +384,162 @@ public class HomeFragment extends Fragment {
             chip.setBackgroundResource(R.drawable.bg_chip_pill_unselected);
             chip.setTextColor(Color.parseColor("#757575"));
         }
+    }
+
+    private void showBloodCampsDialog() {
+        if (getContext() == null) return;
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_blood_camps_hub, null);
+        final AlertDialog dialog = new AlertDialog.Builder(getContext())
+                .setView(dialogView)
+                .create();
+
+        FrameLayout btnClose = dialogView.findViewById(R.id.btn_camps_hub_close);
+        MaterialButton btnDone = dialogView.findViewById(R.id.btn_camps_hub_done);
+        final ProgressBar pb = dialogView.findViewById(R.id.pb_camps_loading);
+        final LinearLayout layoutEmpty = dialogView.findViewById(R.id.layout_camps_empty);
+        final TextView tvEmptyMsg = dialogView.findViewById(R.id.tv_camps_empty_msg);
+        final LinearLayout container = dialogView.findViewById(R.id.container_blood_camps);
+
+        if (btnClose != null) {
+            btnClose.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dialog.dismiss();
+                }
+            });
+        }
+
+        if (btnDone != null) {
+            btnDone.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dialog.dismiss();
+                }
+            });
+        }
+
+        UserProfile user = DataManager.getInstance(getContext()).getCurrentUser();
+        String cityId = user != null ? user.getCityId() : null;
+
+        ApiClient apiClient = ApiClient.getInstance();
+        apiClient.getBloodCamps(cityId, "UPCOMING", new ApiClient.ApiCallback<List<ApiClient.BloodCampItem>>() {
+            @Override
+            public void onSuccess(final List<ApiClient.BloodCampItem> camps) {
+                if (pb != null) pb.setVisibility(View.GONE);
+                if (camps == null || camps.isEmpty()) {
+                    if (layoutEmpty != null) layoutEmpty.setVisibility(View.VISIBLE);
+                    return;
+                }
+
+                if (layoutEmpty != null) layoutEmpty.setVisibility(View.GONE);
+                if (container != null && getContext() != null) {
+                    container.removeAllViews();
+                    LayoutInflater inflater = LayoutInflater.from(getContext());
+
+                    for (final ApiClient.BloodCampItem camp : camps) {
+                        View card = inflater.inflate(R.layout.item_blood_camp, container, false);
+                        TextView tvOrg = card.findViewById(R.id.tv_camp_organizer);
+                        TextView tvTarget = card.findViewById(R.id.tv_camp_target_units);
+                        TextView tvTitle = card.findViewById(R.id.tv_camp_title);
+                        TextView tvDate = card.findViewById(R.id.tv_camp_datetime);
+                        TextView tvVenue = card.findViewById(R.id.tv_camp_venue);
+                        final TextView tvRsvpCount = card.findViewById(R.id.tv_camp_rsvp_count);
+                        MaterialButton btnNav = card.findViewById(R.id.btn_camp_navigate);
+                        final MaterialButton btnRsvp = card.findViewById(R.id.btn_camp_rsvp);
+
+                        if (tvOrg != null) tvOrg.setText(camp.organizerName != null ? camp.organizerName : "Hospital Drive");
+                        if (tvTarget != null) tvTarget.setText("Goal: " + camp.targetUnits + " Units");
+                        if (tvTitle != null) tvTitle.setText(camp.title != null ? camp.title : "Community Blood Drive");
+                        if (tvVenue != null) tvVenue.setText(camp.venueAddress != null ? camp.venueAddress : "Bhubaneswar");
+
+                        String dateStr = camp.startDate != null ? camp.startDate.replace("T", " • ").replace(".000Z", "") : "Upcoming Weekend";
+                        if (tvDate != null) tvDate.setText(dateStr);
+
+                        if (tvRsvpCount != null) {
+                            tvRsvpCount.setText(camp.rsvpCount + (camp.rsvpCount == 1 ? " Donor Attending" : " Donors Attending"));
+                        }
+
+                        if (btnRsvp != null) {
+                            if (camp.isUserRsvped) {
+                                btnRsvp.setText("Attending ✓");
+                                btnRsvp.setBackgroundColor(getResources().getColor(R.color.hospital_teal));
+                            } else {
+                                btnRsvp.setText("I'm Attending");
+                                btnRsvp.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                            }
+
+                            btnRsvp.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    ApiClient.getInstance().toggleCampRsvp(camp.id, new ApiClient.ApiCallback<JsonObject>() {
+                                        @Override
+                                        public void onSuccess(JsonObject result) {
+                                            boolean rsvped = result.has("isUserRsvped") && result.get("isUserRsvped").getAsBoolean();
+                                            int count = result.has("rsvpCount") ? result.get("rsvpCount").getAsInt() : 0;
+                                            camp.isUserRsvped = rsvped;
+                                            camp.rsvpCount = count;
+
+                                            if (rsvped) {
+                                                btnRsvp.setText("Attending ✓");
+                                                btnRsvp.setBackgroundColor(getResources().getColor(R.color.hospital_teal));
+                                                Toast.makeText(getContext(), "RSVP confirmed! We look forward to seeing you.", Toast.LENGTH_SHORT).show();
+                                            } else {
+                                                btnRsvp.setText("I'm Attending");
+                                                btnRsvp.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                                                Toast.makeText(getContext(), "RSVP cancelled", Toast.LENGTH_SHORT).show();
+                                            }
+
+                                            if (tvRsvpCount != null) {
+                                                tvRsvpCount.setText(count + (count == 1 ? " Donor Attending" : " Donors Attending"));
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onError(String errorMessage) {
+                                            Toast.makeText(getContext(), "RSVP failed: " + errorMessage, Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                                }
+                            });
+                        }
+
+                        if (btnNav != null) {
+                            btnNav.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    String uriStr = "geo:" + camp.latitude + "," + camp.longitude + "?q=" + Uri.encode(camp.venueAddress != null ? camp.venueAddress : camp.title);
+                                    Intent mapIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(uriStr));
+                                    mapIntent.setPackage("com.google.android.apps.maps");
+                                    try {
+                                        startActivity(mapIntent);
+                                    } catch (Exception e) {
+                                        Intent genericIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(uriStr));
+                                        try {
+                                            startActivity(genericIntent);
+                                        } catch (Exception ex) {
+                                            Toast.makeText(getContext(), "Unable to open navigation map", Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+                                }
+                            });
+                        }
+
+                        container.addView(card);
+                    }
+                }
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                if (pb != null) pb.setVisibility(View.GONE);
+                if (layoutEmpty != null) layoutEmpty.setVisibility(View.VISIBLE);
+                if (tvEmptyMsg != null) tvEmptyMsg.setText("Failed to load camps: " + errorMessage);
+            }
+        });
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+        dialog.show();
     }
 }
