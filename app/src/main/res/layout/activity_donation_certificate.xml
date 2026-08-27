@@ -6,55 +6,13 @@
     android:background="?attr/colorSurface"
     android:orientation="vertical">
 
-    <!-- Clean Modern Top Navigation Bar -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/colorSurface"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="8dp"
-        android:paddingVertical="14dp">
-
-        <!-- Clean Seamless Back Button -->
-        <ImageView
-            android:id="@+id/btn_floating_back"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:clickable="true"
-            android:focusable="true"
-            android:padding="10dp"
-            android:src="@drawable/ic_back_floating" />
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="OFFICIAL CERTIFICATION"
-                android:textColor="@color/colorPrimary"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Digital Certificate"
-                android:textColor="?attr/colorOnSurface"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-    </LinearLayout>
+    <!-- Seamless Header -->
+    <include layout="@layout/layout_seamless_header" />
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:clipToPadding="false"
         android:fillViewport="true">
 
@@ -62,18 +20,19 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp">
 
-            <!-- Official Digital Certificate Card -->
+            <!-- Official Digital Certificate Card (Captured as Image) -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/card_digital_certificate"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="?attr/colorSurfaceContainer"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="0dp"
-                app:strokeColor="?attr/colorOutlineVariant"
-                app:strokeWidth="1dp">
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="2dp"
+                app:strokeColor="#E2E8F0"
+                app:strokeWidth="1.5dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -81,47 +40,57 @@
                     android:orientation="vertical"
                     android:padding="24dp">
 
-                    <!-- Header Emblem & Org Title -->
+                    <!-- Top Decorative Seal & Network Header -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:orientation="vertical">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="🩸"
-                            android:textSize="36sp" />
+                        <FrameLayout
+                            android:layout_width="60dp"
+                            android:layout_height="60dp"
+                            android:background="@drawable/bg_icon_bubble">
+
+                            <ImageView
+                                android:layout_width="32dp"
+                                android:layout_height="32dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_badge_trophy"
+                                app:tint="#C62828" />
+                        </FrameLayout>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="LIFE SHARE VOLUNTARY NETWORK"
-                            android:textColor="@color/colorPrimary"
-                            android:textSize="12sp"
+                            android:layout_marginTop="8dp"
+                            android:letterSpacing="0.1"
+                            android:text="LIFESHARE VOLUNTARY DONOR NETWORK"
+                            android:textColor="#C62828"
+                            android:textSize="11sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:text="CERTIFICATE OF BLOOD DONATION"
-                            android:textColor="@color/text_primary"
-                            android:textSize="18sp"
+                            android:layout_marginTop="4dp"
+                            android:gravity="center"
+                            android:text="CERTIFICATE OF APPRECIATION"
+                            android:textColor="#0F172A"
+                            android:textSize="19sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:id="@+id/tv_cert_id"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
+                            android:layout_marginTop="6dp"
                             android:background="@drawable/bg_pill_verify"
-                            android:paddingHorizontal="10dp"
-                            android:paddingVertical="3dp"
+                            android:fontFamily="monospace"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="4dp"
                             android:text="CERT-LS-XXXXXX-XXXXX"
-                            android:textColor="@color/colorPrimary"
+                            android:textColor="#C62828"
                             android:textSize="11sp"
                             android:textStyle="bold" />
                     </LinearLayout>
@@ -130,15 +99,15 @@
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:layout_marginVertical="16dp"
-                        android:background="#E0E0E0" />
+                        android:background="#E2E8F0" />
 
                     <!-- Recipient Statement -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_horizontal"
-                        android:text="This is to certify that"
-                        android:textColor="@color/text_secondary"
+                        android:text="This is proudly presented to"
+                        android:textColor="#64748B"
                         android:textSize="13sp" />
 
                     <TextView
@@ -147,8 +116,9 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_horizontal"
                         android:layout_marginTop="4dp"
-                        android:text="Abhijeet Pradhan"
-                        android:textColor="@color/colorPrimary"
+                        android:gravity="center"
+                        android:text="Donor Full Name"
+                        android:textColor="#C62828"
                         android:textSize="22sp"
                         android:textStyle="bold" />
 
@@ -158,17 +128,18 @@
                         android:layout_gravity="center_horizontal"
                         android:layout_marginTop="6dp"
                         android:gravity="center"
-                        android:text="has voluntarily and selflessly donated blood to save precious lives during a critical medical emergency."
-                        android:textColor="@color/text_primary"
+                        android:lineSpacingExtra="2dp"
+                        android:text="in sincere recognition of voluntary blood donation, selflessly helping patients in critical medical need and saving precious human lives."
+                        android:textColor="#334155"
                         android:textSize="13sp" />
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:layout_marginVertical="16dp"
-                        android:background="#E0E0E0" />
+                        android:background="#E2E8F0" />
 
-                    <!-- Details Grid -->
+                    <!-- Details 2x2 Grid -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -184,7 +155,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="BLOOD GROUP"
-                                android:textColor="@color/text_hint"
+                                android:textColor="#94A3B8"
                                 android:textSize="10sp"
                                 android:textStyle="bold" />
 
@@ -194,7 +165,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
                                 android:text="O+"
-                                android:textColor="@color/text_primary"
+                                android:textColor="#0F172A"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
 
@@ -203,7 +174,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="12dp"
                                 android:text="DONATION DATE"
-                                android:textColor="@color/text_hint"
+                                android:textColor="#94A3B8"
                                 android:textSize="10sp"
                                 android:textStyle="bold" />
 
@@ -212,15 +183,16 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="18 Aug 2026"
-                                android:textColor="@color/text_primary"
-                                android:textSize="14sp"
+                                android:text="Verified Date"
+                                android:textColor="#0F172A"
+                                android:textSize="13sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
 
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1.3"
                             android:orientation="vertical">
 
@@ -228,7 +200,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="HOSPITAL / CENTER"
-                                android:textColor="@color/text_hint"
+                                android:textColor="#94A3B8"
                                 android:textSize="10sp"
                                 android:textStyle="bold" />
 
@@ -237,9 +209,9 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Capital Hospital, Bhubaneswar"
-                                android:textColor="@color/text_primary"
-                                android:textSize="14sp"
+                                android:text="Hospital Center"
+                                android:textColor="#0F172A"
+                                android:textSize="13sp"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -247,7 +219,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="12dp"
                                 android:text="VERIFIED BY"
-                                android:textColor="@color/text_hint"
+                                android:textColor="#94A3B8"
                                 android:textSize="10sp"
                                 android:textStyle="bold" />
 
@@ -257,75 +229,87 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
                                 android:text="Hospital Coordinator"
-                                android:textColor="@color/text_primary"
+                                android:textColor="#0F172A"
                                 android:textSize="13sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
                     </LinearLayout>
 
-                    <!-- Cryptographic Hash Footer -->
-                    <LinearLayout
+                    <!-- Cryptographic Hash Verification Box -->
+                    <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="18dp"
-                        android:background="#F9F9F9"
-                        android:orientation="vertical"
-                        android:padding="10dp">
+                        app:cardBackgroundColor="#F8FAFC"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="0dp"
+                        app:strokeColor="#E2E8F0"
+                        app:strokeWidth="1dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="CRYPTOGRAPHIC INTEGRITY HASH (SHA-256)"
-                            android:textColor="@color/text_hint"
-                            android:textSize="9sp"
-                            android:textStyle="bold" />
+                            android:orientation="vertical"
+                            android:padding="12dp">
 
-                        <TextView
-                            android:id="@+id/tv_cert_hash"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:fontFamily="monospace"
-                            android:text="4a9f...e10b"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="10sp" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:letterSpacing="0.05"
+                                android:text="CRYPTOGRAPHIC AUDIT HASH (SHA-256)"
+                                android:textColor="#94A3B8"
+                                android:textSize="9sp"
+                                android:textStyle="bold" />
 
-                        <TextView
-                            android:id="@+id/tv_cert_tamper_badge"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Authoritative Server Integrity Verified"
-                            android:textColor="#2E7D32"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
+                            <TextView
+                                android:id="@+id/tv_cert_hash"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:fontFamily="monospace"
+                                android:text="4a9f...e10b"
+                                android:textColor="#64748B"
+                                android:textSize="10sp" />
+
+                            <TextView
+                                android:id="@+id/tv_cert_tamper_badge"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="✓ Authoritative Server Integrity Verified"
+                                android:textColor="#2E7D32"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Actions Row -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:gravity="center"
-                android:orientation="horizontal">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_share_certificate"
-                    android:layout_width="0dp"
-                    android:layout_height="52dp"
-                    android:layout_weight="1"
-                    android:backgroundTint="@color/colorPrimary"
-                    android:text="Share Certificate"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    app:cornerRadius="12dp" />
-
-            </LinearLayout>
-
         </LinearLayout>
     </ScrollView>
+
+    <!-- Bottom Actions Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorSurface"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="16dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_share_certificate"
+            style="@style/Widget.LifeShare.Button.Primary"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:text="Share Certificate as Image"
+            android:textSize="14sp"
+            app:cornerRadius="25dp"
+            app:icon="@drawable/ic_nav_share"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+            app:iconSize="18dp" />
+    </LinearLayout>
+
 </LinearLayout>

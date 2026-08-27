@@ -1,6 +1,10 @@
 package com.example.abhijeet.bloodbank;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
@@ -8,13 +12,18 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.FileProvider;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
+
+import java.io.File;
+import java.io.FileOutputStream;
 
 public class DonationCertificateActivity extends AppCompatActivity {
 
     private TextView tvCertId, tvDonorName, tvBloodGroup, tvDate, tvHospital, tvVerifiedBy, tvCertHash, tvTamperBadge;
+    private MaterialCardView cardDigitalCertificate;
     private MaterialButton btnShareCertificate;
     private ApiClient apiClient;
     private String certificateId;
@@ -30,7 +39,7 @@ public class DonationCertificateActivity extends AppCompatActivity {
         apiClient.initFromPrefs(this);
 
         if (getIntent().getData() != null) {
-            android.net.Uri data = getIntent().getData();
+            Uri data = getIntent().getData();
             String queryId = data.getQueryParameter("id");
             if (queryId != null && !queryId.isEmpty()) {
                 certificateId = queryId;
@@ -45,6 +54,17 @@ public class DonationCertificateActivity extends AppCompatActivity {
             certificateId = getIntent().getStringExtra("certificateId");
         }
 
+        // Header setup
+        View btnBack = findViewById(R.id.btn_back);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> finish());
+        }
+        TextView tvTitle = findViewById(R.id.tv_header_title);
+        if (tvTitle != null) {
+            tvTitle.setText("Donation Certificate");
+        }
+
+        cardDigitalCertificate = findViewById(R.id.card_digital_certificate);
         tvCertId = findViewById(R.id.tv_cert_id);
         tvDonorName = findViewById(R.id.tv_cert_donor_name);
         tvBloodGroup = findViewById(R.id.tv_cert_blood_group);
@@ -55,23 +75,8 @@ public class DonationCertificateActivity extends AppCompatActivity {
         tvTamperBadge = findViewById(R.id.tv_cert_tamper_badge);
         btnShareCertificate = findViewById(R.id.btn_share_certificate);
 
-        View btnBack = findViewById(R.id.btn_floating_back);
-        if (btnBack != null) {
-            btnBack.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    finish();
-                }
-            });
-        }
-
         if (btnShareCertificate != null) {
-            btnShareCertificate.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    shareCertificateText();
-                }
-            });
+            btnShareCertificate.setOnClickListener(v -> shareCertificateAsImage());
         }
 
         if (certificateId != null && !certificateId.isEmpty()) {
@@ -116,30 +121,76 @@ public class DonationCertificateActivity extends AppCompatActivity {
 
         if (tvTamperBadge != null) {
             if (cert.isTamperProofValid) {
-                tvTamperBadge.setText("Cryptographic Server Integrity Verified");
-                tvTamperBadge.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+                tvTamperBadge.setText("✓ Authoritative Server Integrity Verified");
+                tvTamperBadge.setTextColor(Color.parseColor("#2E7D32"));
             } else {
-                tvTamperBadge.setText("Hash Mismatch Detected");
-                tvTamperBadge.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                tvTamperBadge.setText("⚠ Cryptographic Hash Mismatch Detected");
+                tvTamperBadge.setTextColor(Color.parseColor("#C62828"));
             }
         }
     }
 
-    private void shareCertificateText() {
-        if (loadedCertificate == null) return;
+    private void shareCertificateAsImage() {
+        if (cardDigitalCertificate == null) {
+            Toast.makeText(this, "Certificate is loading, please wait...", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-        String shareText = "LIFE SHARE BLOOD DONATION CERTIFICATE\n" +
-                "Certificate ID: " + loadedCertificate.certificateId + "\n" +
-                "Donor: " + loadedCertificate.donorName + "\n" +
-                "Blood Group: " + loadedCertificate.bloodGroup + "\n" +
-                "Hospital: " + loadedCertificate.hospital + "\n" +
-                "Verified by: " + loadedCertificate.verifiedBy + "\n" +
-                "Status: Certified Voluntary Blood Donation\n" +
-                "LifeShare — Saving Lives Together";
+        try {
+            // 1. Create a high-resolution Bitmap from the Certificate Card View
+            int width = cardDigitalCertificate.getWidth();
+            int height = cardDigitalCertificate.getHeight();
 
-        Intent sendIntent = new Intent(Intent.ACTION_SEND);
-        sendIntent.putExtra(Intent.EXTRA_TEXT, shareText);
-        sendIntent.setType("text/plain");
-        startActivity(Intent.createChooser(sendIntent, "Share Donation Certificate"));
+            if (width <= 0 || height <= 0) {
+                cardDigitalCertificate.measure(
+                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+                );
+                width = cardDigitalCertificate.getMeasuredWidth();
+                height = cardDigitalCertificate.getMeasuredHeight();
+                cardDigitalCertificate.layout(0, 0, width, height);
+            }
+
+            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            canvas.drawColor(Color.WHITE); // Ensure clean solid white backdrop
+            cardDigitalCertificate.draw(canvas);
+
+            // 2. Save to Cache Directory for FileProvider sharing
+            File cacheDir = new File(getCacheDir(), "certificates");
+            if (!cacheDir.exists()) {
+                cacheDir.mkdirs();
+            }
+
+            String fileName = "LifeShare_Certificate_" + (certificateId != null ? certificateId : "Verified") + ".png";
+            File imageFile = new File(cacheDir, fileName);
+
+            FileOutputStream outputStream = new FileOutputStream(imageFile);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+            outputStream.flush();
+            outputStream.close();
+
+            // 3. Obtain secure Content Uri via FileProvider
+            Uri contentUri = FileProvider.getUriForFile(
+                    this,
+                    getPackageName() + ".fileprovider",
+                    imageFile
+            );
+
+            // 4. Launch Image Share Intent
+            String donorName = loadedCertificate != null && loadedCertificate.donorName != null ? loadedCertificate.donorName : "LifeShare Donor";
+            String shareCaption = "Proud to share my Official Blood Donation Certificate (" + (loadedCertificate != null ? loadedCertificate.bloodGroup : "Blood Donor") + ") with LifeShare! 🩸 Saving lives together.";
+
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("image/png");
+            shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
+            shareIntent.putExtra(Intent.EXTRA_TEXT, shareCaption);
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            startActivity(Intent.createChooser(shareIntent, "Share Donation Certificate"));
+
+        } catch (Exception e) {
+            Toast.makeText(this, "Failed to export certificate image: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 }
