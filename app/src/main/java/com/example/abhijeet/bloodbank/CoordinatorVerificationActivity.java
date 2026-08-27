@@ -4,12 +4,15 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -555,20 +558,69 @@ public class CoordinatorVerificationActivity extends AppCompatActivity {
     }
 
     private void showConfirmVerificationDialog(final ApiClient.PendingVerificationItem item) {
-        new AlertDialog.Builder(this)
-                .setTitle("Confirm Blood Donation")
-                .setMessage("Are you sure you want to verify that " + item.donorName + " (" + item.donorBloodGroup + ") has physically completed the blood donation for patient " + item.patientName + " at " + item.hospital + "?\n\nThis will issue an official digital certificate and record this donation.")
-                .setPositiveButton("Confirm & Verify", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        performVerification(item);
-                    }
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        if (item == null || item.requestId == null || item.donorId == null) {
+            Toast.makeText(this, "Invalid request or donor identifier", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_verify_donation_doctor, null);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .setCancelable(true)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+
+        TextView tvDonorSummary = dialogView.findViewById(R.id.tv_verify_donor_summary);
+        TextView tvPatientSummary = dialogView.findViewById(R.id.tv_verify_patient_summary);
+        final EditText etDoctorName = dialogView.findViewById(R.id.et_doctor_name);
+        final EditText etDoctorRegNo = dialogView.findViewById(R.id.et_doctor_reg_no);
+        final EditText etUnits = dialogView.findViewById(R.id.et_units_donated);
+        View btnCancel = dialogView.findViewById(R.id.btn_cancel_verify);
+        View btnSubmit = dialogView.findViewById(R.id.btn_confirm_verify_submit);
+
+        if (tvDonorSummary != null) {
+            tvDonorSummary.setText("Donor: " + (item.donorName != null ? item.donorName : "Voluntary Donor") + " (" + (item.donorBloodGroup != null ? item.donorBloodGroup : "O+") + ")");
+        }
+        if (tvPatientSummary != null) {
+            tvPatientSummary.setText("Patient: " + (item.patientName != null ? item.patientName : "Emergency Patient") + " • " + (item.hospital != null ? item.hospital : "Hospital"));
+        }
+
+        if (btnCancel != null) {
+            btnCancel.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        if (btnSubmit != null) {
+            btnSubmit.setOnClickListener(v -> {
+                String docName = etDoctorName != null ? etDoctorName.getText().toString().trim() : "";
+                String docReg = etDoctorRegNo != null ? etDoctorRegNo.getText().toString().trim() : "";
+                String unitsStr = etUnits != null ? etUnits.getText().toString().trim() : "1";
+
+                if (docName.isEmpty()) {
+                    if (etDoctorName != null) etDoctorName.setError("Doctor name required");
+                    return;
+                }
+                if (docReg.isEmpty()) {
+                    if (etDoctorRegNo != null) etDoctorRegNo.setError("Registration number required");
+                    return;
+                }
+
+                int units = 1;
+                try {
+                    units = Integer.parseInt(unitsStr);
+                } catch (Exception ignored) {}
+
+                dialog.dismiss();
+                performVerification(item, docName, docReg, units);
+            });
+        }
+
+        dialog.show();
     }
 
-    private void performVerification(final ApiClient.PendingVerificationItem item) {
+    private void performVerification(final ApiClient.PendingVerificationItem item, String doctorName, String doctorRegNo, int units) {
         if (item.requestId == null || item.donorId == null) {
             Toast.makeText(this, "Invalid request or donor identifier", Toast.LENGTH_SHORT).show();
             return;
@@ -576,12 +628,12 @@ public class CoordinatorVerificationActivity extends AppCompatActivity {
 
         if (swipeRefresh != null) swipeRefresh.setRefreshing(true);
 
-        apiClient.verifyDonation(item.requestId, item.donorId, new ApiClient.ApiCallback<JsonObject>() {
+        apiClient.verifyDonation(item.requestId, item.donorId, doctorName, doctorRegNo, units, new ApiClient.ApiCallback<JsonObject>() {
             @Override
             public void onSuccess(JsonObject result) {
                 if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
                 String certId = result.has("certificateId") ? result.get("certificateId").getAsString() : "";
-                Toast.makeText(CoordinatorVerificationActivity.this, "Donation verified! Certificate: " + certId, Toast.LENGTH_LONG).show();
+                Toast.makeText(CoordinatorVerificationActivity.this, "Donation verified by " + doctorName + "! Certificate: " + certId, Toast.LENGTH_LONG).show();
                 loadPendingVerifications();
             }
 

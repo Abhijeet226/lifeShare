@@ -280,21 +280,46 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="10dp"
-                                android:text="VERIFIED BY"
+                                android:text="ATTENDING MEDICAL OFFICER"
                                 android:textColor="?attr/colorOnSurfaceVariant"
                                 android:textSize="9.5sp"
                                 android:textStyle="bold" />
 
                             <TextView
-                                android:id="@+id/tv_cert_verified_by"
+                                android:id="@+id/tv_cert_doctor"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Hospital Coordinator"
+                                android:text="Dr. Medical Officer"
                                 android:textColor="?attr/colorOnSurface"
                                 android:textSize="13sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Audit Coordinator Strip -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="AUDITED &amp; ISSUED BY: "
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:textSize="9.5sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tv_cert_verified_by"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Hospital Coordinator"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="10.5sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
 
                     <!-- Cryptographic Hash Verification Box with Embedded QR -->

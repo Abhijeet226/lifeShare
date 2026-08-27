@@ -770,7 +770,7 @@ router.get('/coordinator/history', authenticateToken, async (req, res) => {
 router.post('/:id/verify-donation', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { donorId } = req.body;
+    const { donorId, doctorName, doctorRegistrationNo, unitsDonated } = req.body;
 
     if (!donorId || !mongoose.Types.ObjectId.isValid(donorId)) {
       return res.status(400).json({ success: false, message: 'Valid donorId is required for donation verification.' });
@@ -880,12 +880,17 @@ router.post('/:id/verify-donation', authenticateToken, async (req, res) => {
 
     // 6. Generate Cryptographic Certificate
     const donationDate = new Date();
+    const cleanDoctorName = (doctorName && doctorName.trim()) || 'Attending Medical Officer';
+    const cleanDoctorRegNo = (doctorRegistrationNo && doctorRegistrationNo.trim().toUpperCase()) || '';
+
     const certificateData = generateDonationCertificate({
       donorId: donor._id,
       bloodGroup: donor.bloodGroup || emergency.bloodGroup,
       hospitalName: emergency.hospital,
       donationDate,
-      verifiedById: verifier._id
+      verifiedById: verifier._id,
+      attendingDoctor: cleanDoctorName,
+      doctorRegistrationNo: cleanDoctorRegNo
     });
 
     // 7. Atomic Insert into DonationHistory (Compound unique index guarantees no double-insert)
@@ -898,9 +903,11 @@ router.post('/:id/verify-donation', authenticateToken, async (req, res) => {
         hospital: emergency.hospital,
         patientName: emergency.patientName,
         bloodGroup: donor.bloodGroup || emergency.bloodGroup,
-        unitsDonated: 1,
+        unitsDonated: parseInt(unitsDonated, 10) || 1,
         donationDate,
         status: 'VERIFIED',
+        attendingDoctor: cleanDoctorName,
+        doctorRegistrationNo: cleanDoctorRegNo,
         verifiedBy: verifier._id,
         verifiedAt: donationDate,
         certificateId: certificateData.certificateId,

@@ -38,7 +38,7 @@ import java.io.FileOutputStream;
 
 public class DonationCertificateActivity extends AppCompatActivity {
 
-    private TextView tvCertId, tvDonorName, tvBloodGroup, tvDate, tvHospital, tvVerifiedBy, tvCertHash, tvTamperBadge;
+    private TextView tvCertId, tvDonorName, tvBloodGroup, tvDate, tvHospital, tvCertDoctor, tvVerifiedBy, tvCertHash, tvTamperBadge;
     private ImageView ivCertQrCode;
     private MaterialCardView cardDigitalCertificate;
     private MaterialButton btnPrintPdf, btnShareCertificate;
@@ -109,6 +109,7 @@ public class DonationCertificateActivity extends AppCompatActivity {
         tvBloodGroup = findViewById(R.id.tv_cert_blood_group);
         tvDate = findViewById(R.id.tv_cert_date);
         tvHospital = findViewById(R.id.tv_cert_hospital);
+        tvCertDoctor = findViewById(R.id.tv_cert_doctor);
         tvVerifiedBy = findViewById(R.id.tv_cert_verified_by);
         tvCertHash = findViewById(R.id.tv_cert_hash);
         tvTamperBadge = findViewById(R.id.tv_cert_tamper_badge);
@@ -139,6 +140,14 @@ public class DonationCertificateActivity extends AppCompatActivity {
         if (tvHospital != null) tvHospital.setText(cert.hospital);
         if (tvVerifiedBy != null) tvVerifiedBy.setText(cert.verifiedBy != null ? cert.verifiedBy : "Hospital Coordinator");
         if (tvCertHash != null) tvCertHash.setText("SHA-256: " + (cert.certificateHash != null ? cert.certificateHash : "Verified"));
+
+        if (tvCertDoctor != null) {
+            String docText = (cert.attendingDoctor != null && !cert.attendingDoctor.isEmpty()) ? cert.attendingDoctor : "Attending Medical Officer";
+            if (cert.doctorRegistrationNo != null && !cert.doctorRegistrationNo.isEmpty()) {
+                docText += " (Reg: " + cert.doctorRegistrationNo + ")";
+            }
+            tvCertDoctor.setText(docText);
+        }
 
         String formattedDate = cert.donationDate;
         if (formattedDate != null && formattedDate.length() >= 10) {
@@ -368,22 +377,27 @@ public class DonationCertificateActivity extends AppCompatActivity {
             // 8. Signatures & Verification QR Code Section
             float signY = 460;
 
-            // Left Signature (Medical Officer)
+            // Left Signature (Attending Medical Officer)
             Paint signLinePaint = new Paint();
             signLinePaint.setColor(Color.parseColor("#64748B"));
             signLinePaint.setStrokeWidth(1.2f);
-            canvas.drawLine(80, signY, 260, signY, signLinePaint);
+            canvas.drawLine(80, signY, 280, signY, signLinePaint);
 
             Paint signTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             signTextPaint.setColor(Color.parseColor("#0F172A"));
             signTextPaint.setTextSize(11);
             signTextPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-            canvas.drawText(cert.verifiedBy != null ? cert.verifiedBy : "Hospital Coordinator", 80, signY + 16, signTextPaint);
+
+            String docTitle = (cert.attendingDoctor != null && !cert.attendingDoctor.isEmpty()) ? cert.attendingDoctor : "Attending Medical Officer";
+            canvas.drawText(docTitle, 80, signY + 16, signTextPaint);
 
             Paint signSubPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             signSubPaint.setColor(Color.parseColor("#64748B"));
             signSubPaint.setTextSize(9);
-            canvas.drawText("Attending Medical Verification Desk", 80, signY + 30, signSubPaint);
+            String docSub = (cert.doctorRegistrationNo != null && !cert.doctorRegistrationNo.isEmpty())
+                    ? "Reg No: " + cert.doctorRegistrationNo + " • Medical Officer"
+                    : "Attending Medical Officer";
+            canvas.drawText(docSub, 80, signY + 30, signSubPaint);
 
             // Center Verification QR Code
             if (qrBitmap != null) {
@@ -400,16 +414,17 @@ public class DonationCertificateActivity extends AppCompatActivity {
                 canvas.drawText("Scan to Verify Online", w / 2f, qrTop + qrSize + 12, qrTextPaint);
             }
 
-            // Right Signature (LifeShare Director)
-            canvas.drawLine(w - 260, signY, w - 80, signY, signLinePaint);
+            // Right Signature (Hospital Coordinator / LifeShare Audit)
+            canvas.drawLine(w - 280, signY, w - 80, signY, signLinePaint);
 
             Paint dirSignText = new Paint(signTextPaint);
             dirSignText.setTextAlign(Paint.Align.RIGHT);
-            canvas.drawText("Dr. S. K. Mohapatra", w - 80, signY + 16, dirSignText);
+            String coordTitle = (cert.verifiedBy != null && !cert.verifiedBy.isEmpty()) ? cert.verifiedBy : "Hospital Coordinator";
+            canvas.drawText(coordTitle, w - 80, signY + 16, dirSignText);
 
             Paint dirSignSub = new Paint(signSubPaint);
             dirSignSub.setTextAlign(Paint.Align.RIGHT);
-            canvas.drawText("Director, LifeShare Voluntary Network", w - 80, signY + 30, dirSignSub);
+            canvas.drawText("Auditing Coordinator • LifeShare Network", w - 80, signY + 30, dirSignSub);
 
             // 9. Cryptographic Audit Seal Bottom Strip
             float bottomY = h - 42;

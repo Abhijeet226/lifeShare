@@ -39,6 +39,17 @@ const hospitalSchema = new mongoose.Schema({
     revokedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     reason: { type: String, default: '' },
     donationsVerifiedCount: { type: Number, default: 0 }
+  }],
+  doctors: [{
+    name: { type: String, required: true, trim: true },
+    designation: { type: String, default: 'Medical Officer (Transfusion Medicine)' },
+    registrationNumber: { type: String, required: true, trim: true },
+    department: { type: String, default: 'Blood Bank & Transfusion Unit' },
+    phone: { type: String, default: '' },
+    email: { type: String, default: '' },
+    isActive: { type: Boolean, default: true },
+    addedAt: { type: Date, default: Date.now },
+    addedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
   }]
 }, {
   timestamps: true

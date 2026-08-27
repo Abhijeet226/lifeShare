@@ -43,6 +43,14 @@ const donationHistorySchema = new mongoose.Schema({
     enum: ['VERIFIED', 'CANCELLED'],
     default: 'VERIFIED'
   },
+  attendingDoctor: {
+    type: String,
+    default: 'Attending Medical Officer'
+  },
+  doctorRegistrationNo: {
+    type: String,
+    default: ''
+  },
   verifiedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

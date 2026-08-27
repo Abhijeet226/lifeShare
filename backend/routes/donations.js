@@ -76,6 +76,8 @@ router.get('/certificate/:certificateId', authenticateToken, async (req, res) =>
         donationDate: donation.donationDate,
         verifiedAt: donation.verifiedAt,
         status: donation.status,
+        attendingDoctor: donation.attendingDoctor || 'Attending Medical Officer',
+        doctorRegistrationNo: donation.doctorRegistrationNo || '',
         verifiedBy: donation.verifiedBy ? donation.verifiedBy.name : 'Authorized Hospital Authority',
         certificateHash: donation.certificateHash,
         isTamperProofValid: isValid
@@ -113,6 +115,8 @@ router.get('/verify/:certificateId', async (req, res) => {
       donationDate: donation.donationDate,
       issuedAt: donation.verifiedAt || donation.createdAt,
       status: donation.status,
+      attendingDoctor: donation.attendingDoctor || 'Attending Medical Officer',
+      doctorRegistrationNo: donation.doctorRegistrationNo || '',
       verificationAuthority: 'LifeShare Voluntary Blood Network',
       certificateHash: donation.certificateHash
     });

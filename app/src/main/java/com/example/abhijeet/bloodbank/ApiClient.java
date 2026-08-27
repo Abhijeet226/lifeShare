@@ -1061,6 +1061,8 @@ public class ApiClient {
                     cert.donationDate = optString(c, "donationDate", "");
                     cert.verifiedAt = optString(c, "verifiedAt", "");
                     cert.status = optString(c, "status", "VERIFIED");
+                    cert.attendingDoctor = optString(c, "attendingDoctor", "Attending Medical Officer");
+                    cert.doctorRegistrationNo = optString(c, "doctorRegistrationNo", "");
                     cert.verifiedBy = optString(c, "verifiedBy", "LifeShare Medical Authority");
                     cert.certificateHash = optString(c, "certificateHash", "");
                     cert.isTamperProofValid = !c.has("isTamperProofValid") || c.get("isTamperProofValid").getAsBoolean();
@@ -1077,9 +1079,66 @@ public class ApiClient {
         });
     }
 
-    public void verifyDonation(String emergencyId, String donorId, final ApiCallback<JsonObject> callback) {
+    public void getHospitalDoctors(String hospitalId, final ApiCallback<List<HospitalDoctor>> callback) {
+        get("/hospitals/" + hospitalId + "/doctors", new InternalCallback() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                try {
+                    List<HospitalDoctor> list = new ArrayList<>();
+                    if (body.has("doctors") && body.get("doctors").isJsonArray()) {
+                        for (JsonElement el : body.getAsJsonArray("doctors")) {
+                            HospitalDoctor doc = gson.fromJson(el, HospitalDoctor.class);
+                            if (doc != null) list.add(doc);
+                        }
+                    }
+                    callback.onSuccess(list);
+                } catch (Exception e) {
+                    callback.onError("Failed to parse doctors: " + e.getMessage());
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                callback.onError(error);
+            }
+        });
+    }
+
+    public void addHospitalDoctor(String hospitalId, String name, String regNo, String designation, String department, final ApiCallback<HospitalDoctor> callback) {
+        JsonObject json = new JsonObject();
+        json.addProperty("name", name);
+        json.addProperty("registrationNumber", regNo);
+        json.addProperty("designation", designation != null && !designation.isEmpty() ? designation : "Medical Officer");
+        json.addProperty("department", department != null && !department.isEmpty() ? department : "Blood Transfusion Unit");
+
+        post("/hospitals/" + hospitalId + "/doctors", json.toString(), new InternalCallback() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                try {
+                    if (body.has("doctor") && body.get("doctor").isJsonObject()) {
+                        HospitalDoctor doc = gson.fromJson(body.getAsJsonObject("doctor"), HospitalDoctor.class);
+                        callback.onSuccess(doc);
+                    } else {
+                        callback.onError("Failed to parse added doctor");
+                    }
+                } catch (Exception e) {
+                    callback.onError("Doctor addition failed: " + e.getMessage());
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                callback.onError(error);
+            }
+        });
+    }
+
+    public void verifyDonation(String emergencyId, String donorId, String doctorName, String doctorRegNo, int units, final ApiCallback<JsonObject> callback) {
         JsonObject json = new JsonObject();
         json.addProperty("donorId", donorId);
+        if (doctorName != null && !doctorName.isEmpty()) json.addProperty("doctorName", doctorName);
+        if (doctorRegNo != null && !doctorRegNo.isEmpty()) json.addProperty("doctorRegistrationNo", doctorRegNo);
+        json.addProperty("unitsDonated", units > 0 ? units : 1);
 
         post("/emergencies/" + emergencyId + "/verify-donation", json.toString(), new InternalCallback() {
             @Override
@@ -1092,6 +1151,10 @@ public class ApiClient {
                 callback.onError(error);
             }
         });
+    }
+
+    public void verifyDonation(String emergencyId, String donorId, final ApiCallback<JsonObject> callback) {
+        verifyDonation(emergencyId, donorId, "Attending Medical Officer", "", 1, callback);
     }
 
     public void getCoordinatorPendingVerifications(final ApiCallback<List<PendingVerificationItem>> callback) {
@@ -1337,6 +1400,16 @@ public class ApiClient {
         public String verifiedAt;
     }
 
+    public static class HospitalDoctor {
+        public String id;
+        public String name;
+        public String designation;
+        public String registrationNumber;
+        public String department;
+        public String phone;
+        public String email;
+    }
+
     public static class DonationCertificate {
         public String certificateId;
         public String donorName;
@@ -1346,6 +1419,8 @@ public class ApiClient {
         public String donationDate;
         public String verifiedAt;
         public String status;
+        public String attendingDoctor;
+        public String doctorRegistrationNo;
         public String verifiedBy;
         public String certificateHash;
         public boolean isTamperProofValid = true;
