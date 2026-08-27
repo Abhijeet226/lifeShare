@@ -1,8 +1,10 @@
 package com.example.abhijeet.bloodbank;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -18,28 +20,39 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.widget.NestedScrollView;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
 import com.google.gson.JsonObject;
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class AdminDashboardActivity extends AppCompatActivity {
 
+    private static final int RC_CAMERA_PERMISSION = 2001;
+
     private SwipeRefreshLayout swipeRefresh;
     private NestedScrollView scrollContent;
     private TextView tvStatUsers, tvStatDonors, tvStatHospitals, tvStatDonations;
     private TextView tvSectionTitle;
     private MaterialButton btnAddHospital, btnSwitchToDonor;
-    private FrameLayout btnAdminProfile;
+    private FrameLayout btnAdminProfile, btnAdminScanQr;
     private FrameLayout layoutSearchBar;
     private EditText etSearch;
     private LinearLayout containerItems, layoutEmpty;
@@ -54,6 +67,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private TextView tvNavUsers, tvNavHospitals, tvNavEmergencies, tvNavAudit;
 
     private ApiClient apiClient;
+    private int savedScrollPosition = 0;
 
     private enum AdminTab { USERS, HOSPITALS, EMERGENCIES, AUDIT }
     private AdminTab currentTab = AdminTab.USERS;
@@ -112,6 +126,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
         btnAddHospital = findViewById(R.id.btn_admin_add_hospital);
         btnSwitchToDonor = findViewById(R.id.btn_switch_to_donor);
         btnAdminProfile = findViewById(R.id.btn_admin_profile);
+        btnAdminScanQr = findViewById(R.id.btn_admin_scan_qr);
 
         layoutSearchBar = findViewById(R.id.layout_admin_search_bar);
         etSearch = findViewById(R.id.et_admin_search);
@@ -151,6 +166,15 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     Intent intent = new Intent(AdminDashboardActivity.this, LogInActivity.class);
                     startActivity(intent);
+                }
+            });
+        }
+
+        if (btnAdminScanQr != null) {
+            btnAdminScanQr.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    startAdminQrScanner();
                 }
             });
         }
@@ -494,6 +518,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
             containerItems.addView(view);
         }
+        restoreSavedScrollPosition();
     }
 
     private void showUserActionSheet(final ApiClient.AdminUserItem user) {
@@ -556,7 +581,19 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     dialog.dismiss();
-                    updateUserStatus(user.id, "ACTIVE");
+                    showAdminConfirmationDialog(
+                            "Reactivate Account",
+                            "Account Status",
+                            "Reactivate account access and restore privileges for " + user.name + " (" + user.email + ")?",
+                            "Activate",
+                            false,
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    updateUserStatus(user.id, "ACTIVE");
+                                }
+                            }
+                    );
                 }
             });
         }
@@ -566,7 +603,19 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     dialog.dismiss();
-                    updateUserStatus(user.id, "SUSPENDED");
+                    showAdminConfirmationDialog(
+                            "Suspend Account",
+                            "Security Restriction",
+                            "Suspend " + user.name + " (" + user.email + ")? The user will be temporarily restricted from broadcasting SOS requests.",
+                            "Suspend User",
+                            true,
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    updateUserStatus(user.id, "SUSPENDED");
+                                }
+                            }
+                    );
                 }
             });
         }
@@ -576,7 +625,19 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     dialog.dismiss();
-                    updateUserStatus(user.id, "BLOCKED");
+                    showAdminConfirmationDialog(
+                            "Block Account",
+                            "Permanent Security Action",
+                            "Permanently block " + user.name + " (" + user.email + ") from accessing LifeShare operations?",
+                            "Block User",
+                            true,
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    updateUserStatus(user.id, "BLOCKED");
+                                }
+                            }
+                    );
                 }
             });
         }
@@ -647,7 +708,19 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     dialog.dismiss();
-                    updateUserStatus(user.id, "ACTIVE");
+                    showAdminConfirmationDialog(
+                            "Reactivate Account",
+                            "Account Status",
+                            "Reactivate account access and restore privileges for " + user.name + "?",
+                            "Activate",
+                            false,
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    updateUserStatus(user.id, "ACTIVE");
+                                }
+                            }
+                    );
                 }
             });
         }
@@ -657,7 +730,19 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     dialog.dismiss();
-                    updateUserStatus(user.id, "SUSPENDED");
+                    showAdminConfirmationDialog(
+                            "Suspend Account",
+                            "Security Restriction",
+                            "Suspend " + user.name + "? The user will be temporarily restricted from broadcasting SOS requests.",
+                            "Suspend User",
+                            true,
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    updateUserStatus(user.id, "SUSPENDED");
+                                }
+                            }
+                    );
                 }
             });
         }
@@ -667,7 +752,19 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     dialog.dismiss();
-                    updateUserStatus(user.id, "BLOCKED");
+                    showAdminConfirmationDialog(
+                            "Block Account",
+                            "Permanent Security Action",
+                            "Permanently block " + user.name + " (" + user.email + ") from accessing LifeShare operations?",
+                            "Block User",
+                            true,
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    updateUserStatus(user.id, "BLOCKED");
+                                }
+                            }
+                    );
                 }
             });
         }
@@ -679,6 +776,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
     }
 
     private void updateUserStatus(String userId, final String newStatus) {
+        if (scrollContent != null) savedScrollPosition = scrollContent.getScrollY();
         if (swipeRefresh != null) swipeRefresh.setRefreshing(true);
 
         apiClient.updateAdminUserStatus(userId, newStatus, new ApiClient.ApiCallback<JsonObject>() {
@@ -733,7 +831,19 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     dialog.dismiss();
-                    updateUserRole(user.id, "DONOR");
+                    showAdminConfirmationDialog(
+                            "Demote to Standard Donor",
+                            "Role Modification",
+                            "Revoke coordinator/admin privileges and unassign " + user.name + " (" + user.email + ") from any hospital?",
+                            "Demote to Donor",
+                            true,
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    updateUserRole(user.id, "DONOR", null);
+                                }
+                            }
+                    );
                 }
             });
         }
@@ -743,7 +853,24 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     dialog.dismiss();
-                    updateUserRole(user.id, "COORDINATOR");
+                    showSelectHospitalDialog(new HospitalSelectCallback() {
+                        @Override
+                        public void onHospitalSelected(final ApiClient.AdminHospitalItem hospital) {
+                            showAdminConfirmationDialog(
+                                    "Appoint Hospital Coordinator",
+                                    "Coordinator Authorization",
+                                    "Appoint " + user.name + " (" + user.email + ") as official Coordinator for " + hospital.name + " (" + (hospital.city != null ? hospital.city : "") + ")?",
+                                    "Appoint Coordinator",
+                                    false,
+                                    new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            updateUserRole(user.id, "COORDINATOR", hospital.id);
+                                        }
+                                    }
+                            );
+                        }
+                    });
                 }
             });
         }
@@ -753,7 +880,19 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     dialog.dismiss();
-                    updateUserRole(user.id, "ADMIN");
+                    showAdminConfirmationDialog(
+                            "Promote to Super Administrator",
+                            "Elevate Permissions",
+                            "Grant full administrative control and security oversight to " + user.name + " (" + user.email + ")?",
+                            "Promote Admin",
+                            false,
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    updateUserRole(user.id, "ADMIN", null);
+                                }
+                            }
+                    );
                 }
             });
         }
@@ -764,10 +903,11 @@ public class AdminDashboardActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void updateUserRole(String userId, final String newRole) {
+    private void updateUserRole(String userId, final String newRole, final String hospitalId) {
+        if (scrollContent != null) savedScrollPosition = scrollContent.getScrollY();
         if (swipeRefresh != null) swipeRefresh.setRefreshing(true);
 
-        apiClient.updateAdminUserRole(userId, newRole, null, new ApiClient.ApiCallback<JsonObject>() {
+        apiClient.updateAdminUserRole(userId, newRole, hospitalId, new ApiClient.ApiCallback<JsonObject>() {
             @Override
             public void onSuccess(JsonObject result) {
                 if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
@@ -781,6 +921,437 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 Toast.makeText(AdminDashboardActivity.this, "Failed to update role: " + errorMessage, Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    // =========================================================================
+    // SEARCHABLE HOSPITAL SELECTOR DIALOG
+    // =========================================================================
+
+    private interface HospitalSelectCallback {
+        void onHospitalSelected(ApiClient.AdminHospitalItem hospital);
+    }
+
+    private void showSelectHospitalDialog(final HospitalSelectCallback callback) {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_select_hospital, null);
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        final EditText etSearchHosp = dialogView.findViewById(R.id.et_dialog_hospital_search);
+        final ProgressBar pb = dialogView.findViewById(R.id.pb_dialog_hospitals);
+        final TextView tvEmpty = dialogView.findViewById(R.id.tv_dialog_hospitals_empty);
+        final RecyclerView recycler = dialogView.findViewById(R.id.recycler_dialog_hospitals);
+        MaterialButton btnClose = dialogView.findViewById(R.id.btn_dialog_close_hospitals);
+
+        if (btnClose != null) {
+            btnClose.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dialog.dismiss();
+                }
+            });
+        }
+
+        if (recycler != null) recycler.setLayoutManager(new LinearLayoutManager(this));
+
+        final List<ApiClient.AdminHospitalItem> allHospitals = new ArrayList<>(loadedHospitals);
+        final List<ApiClient.AdminHospitalItem> displayHospitals = new ArrayList<>();
+
+        final Runnable populateAdapter = new Runnable() {
+            @Override
+            public void run() {
+                if (pb != null) pb.setVisibility(View.GONE);
+                if (displayHospitals.isEmpty()) {
+                    if (tvEmpty != null) tvEmpty.setVisibility(View.VISIBLE);
+                    if (recycler != null) recycler.setVisibility(View.GONE);
+                } else {
+                    if (tvEmpty != null) tvEmpty.setVisibility(View.GONE);
+                    if (recycler != null) {
+                        recycler.setVisibility(View.VISIBLE);
+                        recycler.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+                            @NonNull
+                            @Override
+                            public RecyclerView.ViewHolder onCreateViewHolder(@NonNull android.view.ViewGroup parent, int viewType) {
+                                View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_verified_hospital, parent, false);
+                                return new RecyclerView.ViewHolder(v) {};
+                            }
+
+                            @Override
+                            public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+                                final ApiClient.AdminHospitalItem h = displayHospitals.get(position);
+                                TextView tvName = holder.itemView.findViewById(R.id.tv_item_hospital_name);
+                                TextView tvAddress = holder.itemView.findViewById(R.id.tv_item_hospital_address);
+                                if (tvName != null) tvName.setText(h.name != null ? h.name : "Hospital");
+                                if (tvAddress != null) tvAddress.setText((h.address != null ? h.address : "") + " • " + (h.city != null ? h.city : ""));
+
+                                holder.itemView.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        dialog.dismiss();
+                                        if (callback != null) callback.onHospitalSelected(h);
+                                    }
+                                });
+                            }
+
+                            @Override
+                            public int getItemCount() {
+                                return displayHospitals.size();
+                            }
+                        });
+                    }
+                }
+            }
+        };
+
+        if (allHospitals.isEmpty()) {
+            if (pb != null) pb.setVisibility(View.VISIBLE);
+            apiClient.getAdminHospitals(new ApiClient.ApiCallback<List<ApiClient.AdminHospitalItem>>() {
+                @Override
+                public void onSuccess(List<ApiClient.AdminHospitalItem> result) {
+                    if (result != null) {
+                        loadedHospitals = result;
+                        allHospitals.clear();
+                        allHospitals.addAll(result);
+                        displayHospitals.clear();
+                        displayHospitals.addAll(result);
+                    }
+                    populateAdapter.run();
+                }
+
+                @Override
+                public void onError(String errorMessage) {
+                    if (pb != null) pb.setVisibility(View.GONE);
+                    if (tvEmpty != null) {
+                        tvEmpty.setVisibility(View.VISIBLE);
+                        tvEmpty.setText("Failed to load hospitals: " + errorMessage);
+                    }
+                }
+            });
+        } else {
+            displayHospitals.addAll(allHospitals);
+            populateAdapter.run();
+        }
+
+        if (etSearchHosp != null) {
+            etSearchHosp.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    String query = s.toString().toLowerCase().trim();
+                    displayHospitals.clear();
+                    if (query.isEmpty()) {
+                        displayHospitals.addAll(allHospitals);
+                    } else {
+                        for (ApiClient.AdminHospitalItem h : allHospitals) {
+                            if ((h.name != null && h.name.toLowerCase().contains(query))
+                                    || (h.city != null && h.city.toLowerCase().contains(query))
+                                    || (h.address != null && h.address.toLowerCase().contains(query))) {
+                                displayHospitals.add(h);
+                            }
+                        }
+                    }
+                    populateAdapter.run();
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {}
+            });
+        }
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+        dialog.show();
+    }
+
+    // =========================================================================
+    // THEMED CONFIRMATION DIALOG HELPER
+    // =========================================================================
+
+    private void showAdminConfirmationDialog(
+            String title,
+            String subtitle,
+            String message,
+            String confirmText,
+            boolean isDestructive,
+            final Runnable onConfirm
+    ) {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_admin_confirm, null);
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        TextView tvTitle = dialogView.findViewById(R.id.tv_confirm_title);
+        TextView tvSub = dialogView.findViewById(R.id.tv_confirm_subtitle);
+        TextView tvMsg = dialogView.findViewById(R.id.tv_confirm_message);
+        MaterialButton btnCancel = dialogView.findViewById(R.id.btn_confirm_cancel);
+        MaterialButton btnAction = dialogView.findViewById(R.id.btn_confirm_action);
+        ImageView ivIcon = dialogView.findViewById(R.id.iv_confirm_icon);
+        FrameLayout iconBg = dialogView.findViewById(R.id.layout_confirm_icon_bg);
+
+        if (tvTitle != null && title != null) tvTitle.setText(title);
+        if (tvSub != null && subtitle != null) tvSub.setText(subtitle);
+        if (tvMsg != null && message != null) tvMsg.setText(message);
+        if (btnAction != null && confirmText != null) btnAction.setText(confirmText);
+
+        if (isDestructive) {
+            if (btnAction != null) {
+                btnAction.setBackgroundColor(Color.parseColor("#C62828"));
+                btnAction.setTextColor(Color.WHITE);
+            }
+            if (ivIcon != null) {
+                ivIcon.setImageResource(R.drawable.ic_emergency_sos);
+                ivIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#C62828")));
+            }
+            if (iconBg != null) {
+                iconBg.setBackgroundColor(Color.parseColor("#26C62828"));
+            }
+        }
+
+        if (btnCancel != null) {
+            btnCancel.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dialog.dismiss();
+                }
+            });
+        }
+
+        if (btnAction != null) {
+            btnAction.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dialog.dismiss();
+                    if (onConfirm != null) {
+                        onConfirm.run();
+                    }
+                }
+            });
+        }
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+        dialog.show();
+    }
+
+    // =========================================================================
+    // IN-PERSON QR CODE SCANNER ONBOARDING FLOW
+    // =========================================================================
+
+    private void startAdminQrScanner() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, RC_CAMERA_PERMISSION);
+            return;
+        }
+
+        try {
+            IntentIntegrator integrator = new IntentIntegrator(this);
+            integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE);
+            integrator.setPrompt("Scan LifeShare Digital Pass QR to Onboard Coordinator");
+            integrator.setCameraId(0);
+            integrator.setBeepEnabled(true);
+            integrator.setBarcodeImageEnabled(false);
+            integrator.setOrientationLocked(true);
+            integrator.initiateScan();
+        } catch (Throwable t) {
+            Toast.makeText(this, "Scanner error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == RC_CAMERA_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startAdminQrScanner();
+            } else {
+                Toast.makeText(this, "Camera permission is required to scan Digital Passes", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        if (result != null) {
+            if (result.getContents() != null) {
+                handleAdminScannedQr(result.getContents());
+            }
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+    private void handleAdminScannedQr(String rawValue) {
+        if (rawValue == null || rawValue.trim().isEmpty()) {
+            Toast.makeText(this, "Scanned QR code was empty", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String targetUserId = null;
+        String targetName = null;
+        String targetMobile = null;
+        String targetBlood = null;
+
+        if (rawValue.contains("|")) {
+            String[] parts = rawValue.split("\\|");
+            for (String part : parts) {
+                if (part.startsWith("USERID=") || part.startsWith("ID=")) {
+                    targetUserId = part.substring(part.indexOf('=') + 1).trim();
+                } else if (part.startsWith("NAME=")) {
+                    targetName = part.substring("NAME=".length()).trim();
+                } else if (part.startsWith("BG=")) {
+                    targetBlood = part.substring("BG=".length()).trim();
+                } else if (part.startsWith("MOBILE=")) {
+                    targetMobile = part.substring("MOBILE=".length()).trim();
+                }
+            }
+        } else if (rawValue.startsWith("lifeshare:donor:")) {
+            targetUserId = rawValue.substring("lifeshare:donor:".length()).trim();
+        } else {
+            targetUserId = rawValue.trim();
+        }
+
+        if (swipeRefresh != null) swipeRefresh.setRefreshing(true);
+
+        if (targetUserId != null && !targetUserId.isEmpty() && targetUserId.length() == 24) {
+            final String finalUserId = targetUserId;
+            final String finalName = targetName;
+            final String finalMobile = targetMobile;
+            final String finalBlood = targetBlood;
+
+            apiClient.getAdminUser(targetUserId, new ApiClient.ApiCallback<ApiClient.AdminUserItem>() {
+                @Override
+                public void onSuccess(ApiClient.AdminUserItem user) {
+                    if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
+                    if (user != null) {
+                        showScannedCoordinatorOnboardDialog(user);
+                    } else {
+                        Toast.makeText(AdminDashboardActivity.this, "User record not found", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onError(String errorMessage) {
+                    if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
+                    ApiClient.AdminUserItem fallback = new ApiClient.AdminUserItem();
+                    fallback.id = finalUserId;
+                    fallback.name = finalName != null ? finalName : "Scanned Candidate";
+                    fallback.mobile = finalMobile != null ? finalMobile : "";
+                    fallback.bloodGroup = finalBlood != null ? finalBlood : "O+";
+                    fallback.role = "DONOR";
+                    fallback.accountStatus = "ACTIVE";
+                    showScannedCoordinatorOnboardDialog(fallback);
+                }
+            });
+        } else {
+            String searchQuery = targetMobile != null ? targetMobile : (targetName != null ? targetName : rawValue.trim());
+            apiClient.getAdminUsers(searchQuery, null, null, 1, 10, new ApiClient.ApiCallback<List<ApiClient.AdminUserItem>>() {
+                @Override
+                public void onSuccess(List<ApiClient.AdminUserItem> users) {
+                    if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
+                    if (users != null && !users.isEmpty()) {
+                        showScannedCoordinatorOnboardDialog(users.get(0));
+                    } else {
+                        Toast.makeText(AdminDashboardActivity.this, "No registered LifeShare account found for scanned QR", Toast.LENGTH_LONG).show();
+                    }
+                }
+
+                @Override
+                public void onError(String errorMessage) {
+                    if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
+                    Toast.makeText(AdminDashboardActivity.this, "Failed to resolve scanned pass: " + errorMessage, Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
+
+    private void showScannedCoordinatorOnboardDialog(final ApiClient.AdminUserItem candidate) {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_admin_scan_onboard, null);
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        TextView tvBlood = dialogView.findViewById(R.id.tv_scanned_blood_group);
+        TextView tvName = dialogView.findViewById(R.id.tv_scanned_user_name);
+        TextView tvContact = dialogView.findViewById(R.id.tv_scanned_user_contact);
+        TextView tvCurrentRole = dialogView.findViewById(R.id.tv_scanned_current_role);
+        MaterialCardView cardSelectHospital = dialogView.findViewById(R.id.card_select_assigned_hospital);
+        final TextView tvAssignedHospital = dialogView.findViewById(R.id.tv_assigned_hospital_name);
+        final EditText etStaffId = dialogView.findViewById(R.id.et_scanned_staff_id);
+        MaterialButton btnCancel = dialogView.findViewById(R.id.btn_scanned_onboard_cancel);
+        MaterialButton btnConfirm = dialogView.findViewById(R.id.btn_scanned_onboard_confirm);
+
+        final ApiClient.AdminHospitalItem[] selectedHospital = new ApiClient.AdminHospitalItem[1];
+
+        if (tvBlood != null) tvBlood.setText(candidate.bloodGroup != null ? candidate.bloodGroup : "O+");
+        if (tvName != null) tvName.setText(candidate.name != null ? candidate.name : "Candidate");
+        if (tvContact != null) tvContact.setText((candidate.email != null ? candidate.email : "") + " • " + (candidate.mobile != null ? candidate.mobile : ""));
+        if (tvCurrentRole != null) tvCurrentRole.setText(candidate.role != null ? candidate.role : "DONOR");
+
+        if (cardSelectHospital != null) {
+            cardSelectHospital.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showSelectHospitalDialog(new HospitalSelectCallback() {
+                        @Override
+                        public void onHospitalSelected(ApiClient.AdminHospitalItem hospital) {
+                            selectedHospital[0] = hospital;
+                            if (tvAssignedHospital != null) {
+                                tvAssignedHospital.setText(hospital.name + " (" + (hospital.city != null ? hospital.city : "") + ")");
+                                tvAssignedHospital.setTextColor(getResources().getColor(R.color.colorPrimary));
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        if (btnCancel != null) {
+            btnCancel.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dialog.dismiss();
+                }
+            });
+        }
+
+        if (btnConfirm != null) {
+            btnConfirm.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (selectedHospital[0] == null) {
+                        Toast.makeText(AdminDashboardActivity.this, "Please select an assigned hospital for this coordinator", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    final String staffId = etStaffId != null && etStaffId.getText() != null ? etStaffId.getText().toString().trim() : "";
+
+                    dialog.dismiss();
+                    showAdminConfirmationDialog(
+                            "Confirm Physical Appointment",
+                            "In-Person Verification",
+                            "Authorize " + candidate.name + " as official Coordinator at " + selectedHospital[0].name + "?\n\nPermissions and dispatch notification will be updated immediately.",
+                            "Authorize Coordinator",
+                            false,
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    updateUserRole(candidate.id, "COORDINATOR", selectedHospital[0].id);
+                                }
+                            }
+                    );
+                }
+            });
+        }
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+        dialog.show();
     }
 
     // =========================================================================
@@ -881,6 +1452,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
             containerItems.addView(view);
         }
+        restoreSavedScrollPosition();
     }
 
     private void showManageHospitalCoordinatorsDialog(final ApiClient.AdminHospitalItem hospital) {
@@ -1355,6 +1927,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
             containerItems.addView(view);
         }
+        restoreSavedScrollPosition();
     }
 
     // =========================================================================
@@ -1423,6 +1996,20 @@ public class AdminDashboardActivity extends AppCompatActivity {
             }
 
             containerItems.addView(view);
+        }
+        restoreSavedScrollPosition();
+    }
+
+    private void restoreSavedScrollPosition() {
+        if (savedScrollPosition > 0 && scrollContent != null) {
+            final int pos = savedScrollPosition;
+            scrollContent.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (scrollContent != null) scrollContent.scrollTo(0, pos);
+                }
+            });
+            savedScrollPosition = 0;
         }
     }
 }

@@ -1580,6 +1580,26 @@ public class ApiClient {
         });
     }
 
+    public void getAdminUser(String userId, final ApiCallback<AdminUserItem> callback) {
+        get("/admin/users/" + userId, new InternalCallback() {
+            @Override
+            public void onSuccess(JsonObject response) {
+                try {
+                    JsonObject userObj = response.has("user") ? response.getAsJsonObject("user") : response;
+                    AdminUserItem item = gson.fromJson(userObj, AdminUserItem.class);
+                    callback.onSuccess(item);
+                } catch (Exception e) {
+                    callback.onError("Failed to parse user details: " + e.getMessage());
+                }
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                callback.onError(errorMessage);
+            }
+        });
+    }
+
     public void updateAdminUserStatus(String userId, String status, final ApiCallback<JsonObject> callback) {
         JsonObject body = new JsonObject();
         body.addProperty("status", status);

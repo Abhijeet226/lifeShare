@@ -77,6 +77,24 @@
                         app:iconPadding="4dp"
                         app:iconSize="14dp" />
 
+                    <!-- Scan QR to Onboard Coordinator Button -->
+                    <FrameLayout
+                        android:id="@+id/btn_admin_scan_qr"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/bg_action_circular_neutral"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_qr_scan"
+                            app:tint="?attr/colorOnSurface" />
+                    </FrameLayout>
+
                     <!-- Profile Avatar Icon Button -->
                     <FrameLayout
                         android:id="@+id/btn_admin_profile"

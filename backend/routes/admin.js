@@ -257,10 +257,22 @@ router.patch('/users/:id/role', async (req, res) => {
     targetUser.role = role;
 
     if (role === 'COORDINATOR') {
+      if (!hospitalId && !targetUser.hospitalId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Hospital assignment is mandatory when appointing a coordinator.'
+        });
+      }
       if (hospitalId && mongoose.Types.ObjectId.isValid(hospitalId)) {
         const hospital = await Hospital.findById(hospitalId);
         if (!hospital) {
           return res.status(404).json({ success: false, message: 'Specified hospital not found.' });
+        }
+        // If reassigning to a different hospital, unlink from previous hospital
+        if (previousHospitalId && previousHospitalId.toString() !== hospital._id.toString()) {
+          await Hospital.findByIdAndUpdate(previousHospitalId, {
+            $pull: { authorizedCoordinatorIds: targetUser._id }
+          });
         }
         targetUser.hospitalId = hospital._id;
         // Bi-directional sync
