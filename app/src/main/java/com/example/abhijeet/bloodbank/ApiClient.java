@@ -2169,4 +2169,97 @@ public class ApiClient {
                 .build();
         execute(request, callback);
     }
+
+    public static class ChatHistoryResponse {
+        public JsonObject emergency;
+        public List<ChatMessage> messages = new ArrayList<>();
+    }
+
+    public void getChatHistory(String emergencyId, final ApiCallback<ChatHistoryResponse> callback) {
+        get("/chat/" + emergencyId + "/messages", new InternalCallback() {
+            @Override
+            public void onSuccess(JsonObject response) {
+                try {
+                    ChatHistoryResponse res = new ChatHistoryResponse();
+                    if (response.has("emergency") && response.get("emergency").isJsonObject()) {
+                        res.emergency = response.getAsJsonObject("emergency");
+                    }
+                    if (response.has("messages") && response.get("messages").isJsonArray()) {
+                        for (JsonElement el : response.getAsJsonArray("messages")) {
+                            ChatMessage msg = gson.fromJson(el, ChatMessage.class);
+                            if (msg != null) res.messages.add(msg);
+                        }
+                    }
+                    callback.onSuccess(res);
+                } catch (Exception e) {
+                    callback.onError("Failed to parse chat messages: " + e.getMessage());
+                }
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                callback.onError(errorMessage);
+            }
+        });
+    }
+
+    public void sendChatMessage(String emergencyId, String messageText, String messageType, final ApiCallback<ChatMessage> callback) {
+        JsonObject json = new JsonObject();
+        json.addProperty("messageText", messageText);
+        json.addProperty("messageType", messageType != null ? messageType : "TEXT");
+
+        post("/chat/" + emergencyId + "/messages", json.toString(), new InternalCallback() {
+            @Override
+            public void onSuccess(JsonObject response) {
+                try {
+                    if (response.has("message") && response.get("message").isJsonObject()) {
+                        ChatMessage msg = gson.fromJson(response.getAsJsonObject("message"), ChatMessage.class);
+                        callback.onSuccess(msg);
+                    } else {
+                        callback.onError("Invalid message response");
+                    }
+                } catch (Exception e) {
+                    callback.onError("Failed to parse sent message: " + e.getMessage());
+                }
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                callback.onError(errorMessage);
+            }
+        });
+    }
+
+    public void sendChatEta(String emergencyId, Integer etaMinutes, Double lat, Double lng, String customStatus, final ApiCallback<ChatMessage> callback) {
+        JsonObject json = new JsonObject();
+        if (etaMinutes != null) json.addProperty("etaMinutes", etaMinutes);
+        if (lat != null && lng != null) {
+            json.addProperty("latitude", lat);
+            json.addProperty("longitude", lng);
+        }
+        if (customStatus != null && !customStatus.isEmpty()) {
+            json.addProperty("customStatus", customStatus);
+        }
+
+        post("/chat/" + emergencyId + "/eta", json.toString(), new InternalCallback() {
+            @Override
+            public void onSuccess(JsonObject response) {
+                try {
+                    if (response.has("message") && response.get("message").isJsonObject()) {
+                        ChatMessage msg = gson.fromJson(response.getAsJsonObject("message"), ChatMessage.class);
+                        callback.onSuccess(msg);
+                    } else {
+                        callback.onError("Invalid ETA response");
+                    }
+                } catch (Exception e) {
+                    callback.onError("Failed to parse ETA message: " + e.getMessage());
+                }
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                callback.onError(errorMessage);
+            }
+        });
+    }
 }

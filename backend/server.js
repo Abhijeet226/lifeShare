@@ -14,6 +14,7 @@ const donationRoutes = require('./routes/donations');
 const cityRoutes = require('./routes/cities');
 const adminRoutes = require('./routes/admin');
 const campRoutes = require('./routes/camps');
+const chatRoutes = require('./routes/chat');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -35,6 +36,7 @@ app.use('/api/donations', donationRoutes);
 app.use('/api/cities', cityRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/camps', campRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

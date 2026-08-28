@@ -166,6 +166,19 @@ public class EmergencyDetailActivity extends AppCompatActivity {
             }
         });
 
+        // Live Coordination Chat button click
+        MaterialButton btnOpenChat = findViewById(R.id.btn_open_emergency_chat);
+        if (btnOpenChat != null) {
+            btnOpenChat.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent chatIntent = new Intent(EmergencyDetailActivity.this, EmergencyChatActivity.class);
+                    chatIntent.putExtra("emergency_id", emergencyId);
+                    startActivity(chatIntent);
+                }
+            });
+        }
+
         // Call Coordinator
         btnCallCoordinator.setOnClickListener(new View.OnClickListener() {
             @Override

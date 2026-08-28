@@ -411,6 +411,21 @@
                                 app:iconGravity="textStart"
                                 app:iconPadding="8dp"
                                 app:iconSize="18dp" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btn_open_emergency_chat"
+                                style="@style/Widget.LifeShare.Button.Primary"
+                                android:layout_width="match_parent"
+                                android:layout_height="48dp"
+                                android:layout_marginTop="8dp"
+                                android:text="Live Coordination Chat"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                app:cornerRadius="24dp"
+                                app:icon="@drawable/ic_chat_bubble"
+                                app:iconGravity="textStart"
+                                app:iconPadding="8dp"
+                                app:iconSize="18dp" />
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 
