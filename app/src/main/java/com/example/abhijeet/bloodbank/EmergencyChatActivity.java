@@ -225,7 +225,14 @@ public class EmergencyChatActivity extends AppCompatActivity {
             public void onError(String errorMessage) {
                 if (isFinishing() || isDestroyed()) return;
                 if (pbLoading != null) pbLoading.setVisibility(View.GONE);
-                Toast.makeText(EmergencyChatActivity.this, "Unable to load chat: " + errorMessage, Toast.LENGTH_SHORT).show();
+                EmergencyRequest localReq = DataManager.getInstance(EmergencyChatActivity.this).getEmergencyRequestById(emergencyId);
+                if (localReq != null) {
+                    tvPatientName.setText(localReq.getPatientName());
+                    tvHospitalName.setText(localReq.getHospital());
+                    tvBloodBadge.setText(localReq.getBloodGroup());
+                    tvDestinationAddress.setText(localReq.getHospitalAddress() != null && !localReq.getHospitalAddress().isEmpty() ? localReq.getHospitalAddress() : localReq.getHospital());
+                    destinationHospitalName = localReq.getHospital();
+                }
                 updateEmptyState();
             }
         });

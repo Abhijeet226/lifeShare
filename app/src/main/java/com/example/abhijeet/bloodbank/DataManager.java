@@ -344,6 +344,16 @@ public class DataManager {
         });
     }
 
+    public EmergencyRequest getEmergencyRequestById(String id) {
+        if (id == null) return null;
+        for (EmergencyRequest req : localRequests) {
+            if (id.equalsIgnoreCase(req.getId())) {
+                return req;
+            }
+        }
+        return null;
+    }
+
     public void createEmergencyRequest(EmergencyRequest request, SimpleCallback callback) {
         localRequests.add(0, request);
         ApiClient.getInstance().createEmergencyRequest(request, new ApiClient.ApiCallback<EmergencyRequest>() {
