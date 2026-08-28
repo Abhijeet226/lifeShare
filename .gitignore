@@ -8,8 +8,18 @@ app/build/
 /captures
 .externalNativeBuild
 .cxx/
+
+# Node.js & Backend
 backend/node_modules/
-backend/.env
-backend/config/serviceAccountKey.json
 node_modules/
 
+# Secrets & Environment Variables (NEVER COMMIT)
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+backend/config/serviceAccountKey.json
+backend/config/*.json
+!backend/config/package.json
