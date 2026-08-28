@@ -783,15 +783,7 @@ public class SignUpActivity extends AppCompatActivity {
             @Override
             public void onError(String errorMessage) {
                 setLoading(false);
-                // Save locally and continue
-                UserProfile user = new UserProfile(firstName, lastName, dob, gender, email, phone, bg, city, isAvailable);
-                if (selectedCityId != null && !selectedCityId.isEmpty()) {
-                    user.setCityId(selectedCityId);
-                }
-                DataManager.getInstance(SignUpActivity.this).saveCurrentUser(user);
-                Toast.makeText(SignUpActivity.this, "Registration saved locally! Welcome " + user.getName(), Toast.LENGTH_SHORT).show();
-                startActivity(new Intent(SignUpActivity.this, LogInActivity.class));
-                finishAffinity();
+                Toast.makeText(SignUpActivity.this, "Registration failed: " + (errorMessage != null ? errorMessage : "Unable to complete registration"), Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -827,11 +819,7 @@ public class SignUpActivity extends AppCompatActivity {
                     @Override
                     public void onError(String errorMessage) {
                         setLoading(false);
-                        UserProfile user = new UserProfile(fullName, email, "+91 9820112233", "O+", "Bhubaneswar", true);
-                        DataManager.getInstance(SignUpActivity.this).saveCurrentUser(user);
-                        Toast.makeText(SignUpActivity.this, "Welcome " + fullName + "!", Toast.LENGTH_SHORT).show();
-                        startActivity(new Intent(SignUpActivity.this, LogInActivity.class));
-                        finishAffinity();
+                        Toast.makeText(SignUpActivity.this, "Google Sign-Up failed: " + (errorMessage != null ? errorMessage : "Unable to register with Google"), Toast.LENGTH_LONG).show();
                     }
                 });
             }

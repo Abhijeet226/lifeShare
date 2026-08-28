@@ -55,6 +55,32 @@ app.get('/', (req, res) => {
   });
 });
 
+// JSON 404 Catch-All Middleware
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Resource not found: ${req.method} ${req.originalUrl}`
+  });
+});
+
+// Global Error Handler Middleware
+app.use((err, req, res, next) => {
+  console.error('Unhandled API Error:', err);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Internal server error occurred'
+  });
+});
+
+// Global Process Diagnostics
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('⚠️ Unhandled Promise Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('🚨 Uncaught Exception thrown:', err);
+});
+
 // Connect to MongoDB Atlas & Start Server
 connectDB()
   .then(() => {

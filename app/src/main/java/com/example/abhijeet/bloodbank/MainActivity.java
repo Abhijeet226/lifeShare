@@ -138,12 +138,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onError(String errorMessage) {
                         setLoading(false);
-                        // Save locally and continue
-                        UserProfile user = new UserProfile(name, email, "", "O+", "Mumbai", true);
-                        DataManager.getInstance(MainActivity.this).saveCurrentUser(user);
-                        Toast.makeText(MainActivity.this, "Signed in as " + name + " with Google (Local Sync)!", Toast.LENGTH_SHORT).show();
-                        startActivity(new Intent(MainActivity.this, LogInActivity.class));
-                        finish();
+                        Toast.makeText(MainActivity.this, "Google Sign-In failed: " + (errorMessage != null ? errorMessage : "Unable to verify Google account with server"), Toast.LENGTH_LONG).show();
                     }
                 });
             }
@@ -244,13 +239,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onError(String errorMessage) {
                 setLoading(false);
-                // Fallback to local session
-                UserProfile localUser = DataManager.getInstance(MainActivity.this).getCurrentUser();
-                localUser.setEmail(email);
-                DataManager.getInstance(MainActivity.this).saveCurrentUser(localUser);
-                Toast.makeText(MainActivity.this, "Logged in (Local Session)", Toast.LENGTH_SHORT).show();
-                startActivity(new Intent(MainActivity.this, LogInActivity.class));
-                finish();
+                Toast.makeText(MainActivity.this, errorMessage != null ? errorMessage : "Invalid email or password. Please try again.", Toast.LENGTH_LONG).show();
             }
         });
     }

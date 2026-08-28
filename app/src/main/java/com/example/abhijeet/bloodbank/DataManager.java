@@ -92,6 +92,21 @@ public class DataManager {
 
     public void setLoggedIn(boolean loggedIn) {
         prefs.edit().putBoolean(KEY_LOGGED_IN, loggedIn).apply();
+        if (!loggedIn) {
+            saveAuthToken(null);
+            prefs.edit()
+                    .remove("KEY_USER_ID")
+                    .remove(KEY_USER_NAME)
+                    .remove(KEY_USER_FIRST_NAME)
+                    .remove(KEY_USER_LAST_NAME)
+                    .remove(KEY_USER_EMAIL)
+                    .remove(KEY_USER_MOBILE)
+                    .remove("KEY_USER_ROLE")
+                    .remove("KEY_USER_DONOR_ID")
+                    .remove(KEY_AUTH_TOKEN)
+                    .putBoolean(KEY_LOGGED_IN, false)
+                    .apply();
+        }
     }
 
     public void saveAuthToken(String token) {
@@ -145,6 +160,14 @@ public class DataManager {
         }
     }
 
+    public double[] getLastKnownLocation() {
+        if (!prefs.contains(KEY_USER_LAT)) return null;
+        return new double[]{
+                prefs.getFloat(KEY_USER_LAT, 20.2961f),
+                prefs.getFloat(KEY_USER_LNG, 85.8245f)
+        };
+    }
+
     public long getLastLocationTimestamp() {
         return prefs.getLong(KEY_LAST_LOC_TIME, 0);
     }
@@ -167,13 +190,13 @@ public class DataManager {
     }
 
     public UserProfile getCurrentUser() {
-        String firstName = prefs.getString(KEY_USER_FIRST_NAME, "Abhijeet");
-        String lastName = prefs.getString(KEY_USER_LAST_NAME, "Pradhan");
-        String name = prefs.getString(KEY_USER_NAME, firstName + " " + lastName);
-        String dob = prefs.getString(KEY_USER_DOB, "2000-05-15");
+        String firstName = prefs.getString(KEY_USER_FIRST_NAME, "Donor");
+        String lastName = prefs.getString(KEY_USER_LAST_NAME, "");
+        String name = prefs.getString(KEY_USER_NAME, (firstName + " " + lastName).trim());
+        String dob = prefs.getString(KEY_USER_DOB, "2000-01-01");
         String gender = prefs.getString(KEY_USER_GENDER, "Male");
-        String email = prefs.getString(KEY_USER_EMAIL, "abhijeet@example.com");
-        String mobile = prefs.getString(KEY_USER_MOBILE, "+91 9820112233");
+        String email = prefs.getString(KEY_USER_EMAIL, "");
+        String mobile = prefs.getString(KEY_USER_MOBILE, "+91 ");
         String bg = prefs.getString(KEY_USER_BG, "O+");
         String city = prefs.getString(KEY_USER_CITY, "Bhubaneswar");
         boolean available = prefs.getBoolean(KEY_USER_AVAILABLE, true);
