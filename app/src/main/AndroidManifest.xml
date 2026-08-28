@@ -123,6 +123,18 @@
         </activity>
 
         <activity
+            android:name=".LiveDonorTrackingActivity"
+            android:exported="true"
+            android:parentActivityName=".EmergencyDetailActivity">
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="lifeshare" android:host="track" />
+            </intent-filter>
+        </activity>
+
+        <activity
             android:name=".DonationHistoryActivity"
             android:exported="true"
             android:parentActivityName=".MainActivity">

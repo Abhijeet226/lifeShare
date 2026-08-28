@@ -129,6 +129,17 @@ public class EmergencyChatActivity extends AppCompatActivity {
             }
         });
 
+        if (cardNavigation != null) {
+            cardNavigation.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent trackIntent = new Intent(EmergencyChatActivity.this, LiveDonorTrackingActivity.class);
+                    trackIntent.putExtra("emergency_id", emergencyId);
+                    startActivity(trackIntent);
+                }
+            });
+        }
+
         // Quick Action Status Chips
         chipOnWay.setOnClickListener(new View.OnClickListener() {
             @Override

@@ -426,6 +426,21 @@
                                 app:iconGravity="textStart"
                                 app:iconPadding="8dp"
                                 app:iconSize="18dp" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btn_track_live_route"
+                                style="@style/Widget.LifeShare.Button.Tonal"
+                                android:layout_width="match_parent"
+                                android:layout_height="46dp"
+                                android:layout_marginTop="8dp"
+                                android:text="Track Live Route (In-App Map)"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                app:cornerRadius="24dp"
+                                app:icon="@drawable/ic_route_path"
+                                app:iconGravity="textStart"
+                                app:iconPadding="8dp"
+                                app:iconSize="18dp" />
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 

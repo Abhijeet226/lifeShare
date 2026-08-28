@@ -179,6 +179,18 @@ public class EmergencyDetailActivity extends AppCompatActivity {
             });
         }
 
+        MaterialButton btnTrackLiveRoute = findViewById(R.id.btn_track_live_route);
+        if (btnTrackLiveRoute != null) {
+            btnTrackLiveRoute.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent trackIntent = new Intent(EmergencyDetailActivity.this, LiveDonorTrackingActivity.class);
+                    trackIntent.putExtra("emergency_id", emergencyId);
+                    startActivity(trackIntent);
+                }
+            });
+        }
+
         // Call Coordinator
         btnCallCoordinator.setOnClickListener(new View.OnClickListener() {
             @Override
