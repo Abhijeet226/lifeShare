@@ -434,7 +434,9 @@ public class LogInActivity extends AppCompatActivity implements NavigationView.O
 
     public void logout() {
         DataManager.getInstance(this).setLoggedIn(false);
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
         finish();
-        startActivity(new Intent(this, MainActivity.class));
     }
 }

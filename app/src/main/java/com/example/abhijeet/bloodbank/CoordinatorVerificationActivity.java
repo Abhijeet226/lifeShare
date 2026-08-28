@@ -230,6 +230,15 @@ public class CoordinatorVerificationActivity extends AppCompatActivity {
             });
         }
 
+        if (btnCoordinatorProfile != null) {
+            btnCoordinatorProfile.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showCoordinatorAccountDialog();
+                }
+            });
+        }
+
         if (swipeRefresh != null) {
             swipeRefresh.setColorSchemeResources(R.color.colorPrimary);
             swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -1057,5 +1066,44 @@ public class CoordinatorVerificationActivity extends AppCompatActivity {
 
             containerDonors.addView(view);
         }
+    }
+
+    private void showCoordinatorAccountDialog() {
+        UserProfile user = DataManager.getInstance(this).getCurrentUser();
+        String name = user != null && user.getName() != null ? user.getName() : "Hospital Coordinator";
+        String email = user != null && user.getEmail() != null ? user.getEmail() : "coordinator@lifeshare.in";
+        String hospital = user != null && user.getHospitalName() != null ? user.getHospitalName() : "Assigned Hospital";
+
+        final String[] options = {
+                "Refresh Verification Queue",
+                "Switch to Donor App View",
+                "Sign Out"
+        };
+
+        new AlertDialog.Builder(this)
+                .setTitle(name)
+                .setMessage(email + "\nRole: HOSPITAL COORDINATOR\nHospital: " + hospital)
+                .setItems(options, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (which == 0) {
+                            loadAllData();
+                        } else if (which == 1) {
+                            startActivity(new Intent(CoordinatorVerificationActivity.this, LogInActivity.class));
+                        } else if (which == 2) {
+                            logout();
+                        }
+                    }
+                })
+                .setNegativeButton("Close", null)
+                .show();
+    }
+
+    private void logout() {
+        DataManager.getInstance(this).setLoggedIn(false);
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 }

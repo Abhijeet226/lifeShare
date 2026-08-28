@@ -548,7 +548,9 @@ public class EmergencyFragment extends Fragment {
 
                     @Override
                     public void onError(String message) {
-                        Toast.makeText(getContext(), "Error broadcasting request: " + message, Toast.LENGTH_SHORT).show();
+                        if (getContext() != null) {
+                            Toast.makeText(getContext(), "Error broadcasting request: " + message, Toast.LENGTH_SHORT).show();
+                        }
                     }
                 });
             }

@@ -102,6 +102,7 @@ const emergencyRequestSchema = new mongoose.Schema({
 emergencyRequestSchema.index({ requestLocation: '2dsphere' });
 emergencyRequestSchema.index({ hospitalLocation: '2dsphere' });
 emergencyRequestSchema.index({ status: 1, createdAt: -1 });
+emergencyRequestSchema.index({ status: 1, bloodGroup: 1, cityId: 1 });
 emergencyRequestSchema.index({ bloodGroup: 1, isFulfilled: 1 });
 emergencyRequestSchema.index({ hospitalId: 1 });
 emergencyRequestSchema.index({ cityId: 1 });

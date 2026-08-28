@@ -86,5 +86,6 @@ const bloodCampSchema = new mongoose.Schema({
 
 bloodCampSchema.index({ location: '2dsphere' });
 bloodCampSchema.index({ status: 1, startDate: 1 });
+bloodCampSchema.index({ status: 1, cityId: 1 });
 
 module.exports = mongoose.model('BloodCamp', bloodCampSchema);

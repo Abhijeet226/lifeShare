@@ -277,7 +277,9 @@ public class ProfileFragment extends Fragment {
                         ((LogInActivity) getActivity()).logout();
                     } else if (getContext() != null) {
                         DataManager.getInstance(getContext()).setLoggedIn(false);
-                        startActivity(new Intent(getContext(), MainActivity.class));
+                        Intent intent = new Intent(getContext(), MainActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(intent);
                         if (getActivity() != null) {
                             getActivity().finish();
                         }
