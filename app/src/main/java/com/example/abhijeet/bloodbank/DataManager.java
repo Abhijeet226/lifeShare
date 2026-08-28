@@ -72,10 +72,6 @@ public class DataManager {
         localDonors.add(new UserProfile("Debashis", "Rout", "1995-02-18", "Male", "debashis.r@example.com", "+91 9844556677", "AB+", "Berhampur", true));
         localDonors.add(new UserProfile("Lipsa", "Panda", "2002-09-30", "Female", "lipsa.p@example.com", "+91 9855667788", "O-", "Sambalpur", true));
 
-        // Sample Emergency SOS Requests
-        localRequests.add(new EmergencyRequest("REQ-101", "Ramesh Chandra Jena", "AIIMS Bhubaneswar", "Bhubaneswar", "O+", 3, "+91 9820112233"));
-        localRequests.add(new EmergencyRequest("REQ-102", "Snehalata Mishra", "SCB Medical College", "Cuttack", "AB-", 2, "+91 9855667788"));
-
         // Verified Blood Banks in Odisha
         bloodBanks.add(new BloodBankCenter("BB-1", "AIIMS Blood Center", "Sijua, Patrapada", "Bhubaneswar", "0674-2476789", "24x7 Open", 20.2289, 85.7770, "Hospital Blood Bank"));
         bloodBanks.add(new BloodBankCenter("BB-2", "SCB Medical Blood Bank", "Mangalabag", "Cuttack", "0671-2414080", "24x7 Open", 20.4625, 85.8830, "Govt Blood Center"));
@@ -330,16 +326,16 @@ public class DataManager {
         ApiClient.getInstance().getEmergencyRequests(new ApiClient.ApiCallback<List<EmergencyRequest>>() {
             @Override
             public void onSuccess(List<EmergencyRequest> requests) {
-                if (requests != null && !requests.isEmpty()) {
+                if (requests != null) {
                     callback.onRequestsLoaded(requests);
                 } else {
-                    callback.onRequestsLoaded(new ArrayList<>(localRequests));
+                    callback.onRequestsLoaded(new ArrayList<EmergencyRequest>());
                 }
             }
 
             @Override
             public void onError(String errorMessage) {
-                callback.onRequestsLoaded(new ArrayList<>(localRequests));
+                callback.onRequestsLoaded(new ArrayList<EmergencyRequest>());
             }
         });
     }

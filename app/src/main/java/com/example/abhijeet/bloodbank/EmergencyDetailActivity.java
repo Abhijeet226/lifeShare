@@ -252,36 +252,25 @@ public class EmergencyDetailActivity extends AppCompatActivity {
         ApiClient.getInstance().getEmergencyDetail(emergencyId, new ApiClient.ApiCallback<ApiClient.EmergencyDetailResponse>() {
             @Override
             public void onSuccess(ApiClient.EmergencyDetailResponse detail) {
+                if (isFinishing() || isDestroyed()) return;
                 if (detail != null && detail.emergency != null) {
                     currentEmergency = detail.emergency;
                     bindData(detail);
                 } else {
-                    fallbackToLocalEmergency();
+                    if (layoutDetailSkeleton != null) layoutDetailSkeleton.setVisibility(View.GONE);
+                    Toast.makeText(EmergencyDetailActivity.this, "This emergency request is no longer active.", Toast.LENGTH_LONG).show();
+                    finish();
                 }
             }
 
             @Override
             public void onError(String error) {
-                fallbackToLocalEmergency();
+                if (isFinishing() || isDestroyed()) return;
+                if (layoutDetailSkeleton != null) layoutDetailSkeleton.setVisibility(View.GONE);
+                Toast.makeText(EmergencyDetailActivity.this, "Unable to load emergency details: " + error, Toast.LENGTH_SHORT).show();
+                finish();
             }
         });
-    }
-
-    private void fallbackToLocalEmergency() {
-        EmergencyRequest localReq = DataManager.getInstance(this).getEmergencyRequestById(emergencyId);
-        if (localReq != null) {
-            currentEmergency = localReq;
-            ApiClient.EmergencyDetailResponse fallbackDetail = new ApiClient.EmergencyDetailResponse();
-            fallbackDetail.emergency = localReq;
-            fallbackDetail.userResponseStatus = "NONE";
-            fallbackDetail.unitsRequired = localReq.getUnitsRequired();
-            fallbackDetail.remainingUnits = localReq.getUnitsRequired();
-            bindData(fallbackDetail);
-        } else {
-            if (layoutDetailSkeleton != null) layoutDetailSkeleton.setVisibility(View.GONE);
-            Toast.makeText(EmergencyDetailActivity.this, "This emergency request is no longer active.", Toast.LENGTH_LONG).show();
-            finish();
-        }
     }
 
     private void bindData(ApiClient.EmergencyDetailResponse detail) {
