@@ -7,6 +7,7 @@ const DonationHistory = require('../models/DonationHistory');
 const { authenticateToken } = require('../middleware/auth');
 const { isValidCoordinate, getCityCoordinates } = require('../services/locationService');
 const { checkDonorEligibility } = require('../services/cooldownService');
+const { handleUserLifecycleChange } = require('../services/userLifecycleService');
 
 function sanitizeUser(user) {
   const cityName = user.cityId && user.cityId.name ? user.cityId.name : (user.city || 'Bhubaneswar');
@@ -386,8 +387,12 @@ router.post('/coordinator-onboard-donor', authenticateToken, async (req, res) =>
 // DELETE /api/users/account
 router.delete('/account', authenticateToken, async (req, res) => {
   try {
+    // 1. Execute cascading lifecycle actions (cancels active emergencies created, halts donor transit, releases donors)
+    await handleUserLifecycleChange(req.user.id, 'DELETED', 'User self-deleted account');
+
+    // 2. Anonymize/Purge user record
     await User.findByIdAndDelete(req.user.id);
-    res.json({ success: true, message: 'Account and records purged successfully' });
+    res.json({ success: true, message: 'Account, active emergencies, and engagements purged successfully.' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

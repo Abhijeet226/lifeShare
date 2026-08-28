@@ -18,6 +18,7 @@ const AuditLog = require('../models/AuditLog');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const { logAuditEvent } = require('../services/auditService');
 const { isValidCoordinate } = require('../services/locationService');
+const { handleUserLifecycleChange } = require('../services/userLifecycleService');
 
 // All admin routes strictly require valid JWT and active ADMIN role
 router.use(authenticateToken, requireRole('ADMIN'));
@@ -207,8 +208,9 @@ router.patch('/users/:id/status', async (req, res) => {
     }
 
     const previousStatus = targetUser.accountStatus;
-    targetUser.accountStatus = status;
-    await targetUser.save();
+    
+    // Execute full lifecycle governance cascade (cancels active emergencies, halts donor dispatches, invalidates tokens)
+    await handleUserLifecycleChange(targetUser._id, status, reason, req.currentUser);
 
     logAuditEvent({
       actorId: req.currentUser._id,
