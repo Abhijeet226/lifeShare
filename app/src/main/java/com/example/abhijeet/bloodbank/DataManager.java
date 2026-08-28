@@ -33,16 +33,16 @@ public class DataManager {
     private final SharedPreferences prefs;
     private final Context context;
 
-    private final List<UserProfile> localDonors = new ArrayList<>();
-    private final List<EmergencyRequest> localRequests = new ArrayList<>();
-    private final List<BloodBankCenter> bloodBanks = new ArrayList<>();
-
     public interface DonorCallback {
         void onDonorsLoaded(List<UserProfile> donors);
     }
 
     public interface RequestCallback {
         void onRequestsLoaded(List<EmergencyRequest> requests);
+    }
+
+    public interface BloodBankCallback {
+        void onBloodBanksLoaded(List<BloodBankCenter> bloodBanks);
     }
 
     public interface SimpleCallback {
@@ -65,21 +65,7 @@ public class DataManager {
     }
 
     private void initializeSampleData() {
-        // Pre-populate realistic sample donors across Odisha
-        localDonors.add(new UserProfile("Abhijeet", "Pradhan", "2000-05-15", "Male", "abhijeet@example.com", "+91 9820112233", "O+", "Bhubaneswar", true));
-        localDonors.add(new UserProfile("Soumya", "Mohanty", "1998-08-22", "Male", "soumya.m@example.com", "+91 9811223344", "A+", "Cuttack", true));
-        localDonors.add(new UserProfile("Priyanka", "Patra", "2001-11-04", "Female", "priyanka.p@example.com", "+91 9833445566", "B+", "Rourkela", true));
-        localDonors.add(new UserProfile("Debashis", "Rout", "1995-02-18", "Male", "debashis.r@example.com", "+91 9844556677", "AB+", "Berhampur", true));
-        localDonors.add(new UserProfile("Lipsa", "Panda", "2002-09-30", "Female", "lipsa.p@example.com", "+91 9855667788", "O-", "Sambalpur", true));
-
-        // Verified Blood Banks in Odisha
-        bloodBanks.add(new BloodBankCenter("BB-1", "AIIMS Blood Center", "Sijua, Patrapada", "Bhubaneswar", "0674-2476789", "24x7 Open", 20.2289, 85.7770, "Hospital Blood Bank"));
-        bloodBanks.add(new BloodBankCenter("BB-2", "SCB Medical Blood Bank", "Mangalabag", "Cuttack", "0671-2414080", "24x7 Open", 20.4625, 85.8830, "Govt Blood Center"));
-        bloodBanks.add(new BloodBankCenter("BB-3", "Red Cross Blood Bank", "Unit-4, Bhouma Nagar", "Bhubaneswar", "0674-2501064", "24x7 Open", 20.2724, 85.8338, "Red Cross"));
-    }
-
-    public List<BloodBankCenter> getBloodBanks() {
-        return new ArrayList<>(bloodBanks);
+        // Pure online architecture: all data is synced directly from MongoDB Atlas backend
     }
 
     public boolean isLoggedIn() {
@@ -169,7 +155,7 @@ public class DataManager {
     }
 
     public int getDonationCount() {
-        return prefs.getInt(KEY_DONATION_COUNT, 3);
+        return prefs.getInt(KEY_DONATION_COUNT, 0);
     }
 
     public void incrementDonationCount() {
@@ -271,13 +257,13 @@ public class DataManager {
                 if (donors != null) {
                     callback.onDonorsLoaded(donors);
                 } else {
-                    callback.onDonorsLoaded(filterLocalDonors(bloodGroup));
+                    callback.onDonorsLoaded(new ArrayList<UserProfile>());
                 }
             }
 
             @Override
             public void onError(String errorMessage) {
-                callback.onDonorsLoaded(filterLocalDonors(bloodGroup));
+                callback.onDonorsLoaded(new ArrayList<UserProfile>());
             }
         });
     }
@@ -286,38 +272,36 @@ public class DataManager {
         ApiClient.getInstance().getDonors(bloodGroup, null, new ApiClient.ApiCallback<List<UserProfile>>() {
             @Override
             public void onSuccess(List<UserProfile> donors) {
-                if (donors != null && !donors.isEmpty()) {
+                if (donors != null) {
                     callback.onDonorsLoaded(donors);
                 } else {
-                    callback.onDonorsLoaded(filterLocalDonors(bloodGroup));
+                    callback.onDonorsLoaded(new ArrayList<UserProfile>());
                 }
             }
 
             @Override
             public void onError(String errorMessage) {
-                callback.onDonorsLoaded(filterLocalDonors(bloodGroup));
+                callback.onDonorsLoaded(new ArrayList<UserProfile>());
             }
         });
     }
 
-    public List<BloodBankCenter> getOdishaBloodBanks() {
-        List<BloodBankCenter> list = new ArrayList<>();
-        list.add(new BloodBankCenter("1", "AIIMS Bhubaneswar Blood Center", "Sijua, Patrapada, Bhubaneswar", "Bhubaneswar", "+91 674 2476789", "24/7 Service", 20.2312, 85.7765, "Hospital & Blood Bank"));
-        list.add(new BloodBankCenter("2", "Capital Hospital Blood Bank", "Unit 6, Bhubaneswar", "Bhubaneswar", "+91 674 2391983", "24/7 Service", 20.2644, 85.8281, "Regional Blood Center"));
-        list.add(new BloodBankCenter("3", "SCB Medical College Blood Bank", "Manglabag, Cuttack", "Cuttack", "+91 671 2414080", "24/7 Service", 20.4682, 85.8906, "Govt Medical College"));
-        list.add(new BloodBankCenter("4", "Red Cross Blood Bank", "Unit 9, Bhubaneswar", "Bhubaneswar", "+91 674 2390250", "9:00 AM - 8:00 PM", 20.2856, 85.8402, "Red Cross Society"));
-        list.add(new BloodBankCenter("5", "Ispat General Hospital (IGH) Blood Bank", "Sector 19, Rourkela", "Rourkela", "+91 661 2510251", "24/7 Service", 22.2578, 84.8631, "Hospital Blood Bank"));
-        return list;
-    }
-
-    private List<UserProfile> filterLocalDonors(String bloodGroup) {
-        List<UserProfile> list = new ArrayList<>();
-        for (UserProfile u : localDonors) {
-            if (u.getBloodGroup().equalsIgnoreCase(bloodGroup) || bloodGroup.isEmpty() || bloodGroup.equalsIgnoreCase("All")) {
-                list.add(u);
+    public void fetchBloodBanks(String city, final BloodBankCallback callback) {
+        ApiClient.getInstance().getBloodBanks(city, new ApiClient.ApiCallback<List<BloodBankCenter>>() {
+            @Override
+            public void onSuccess(List<BloodBankCenter> bloodBanks) {
+                if (bloodBanks != null) {
+                    callback.onBloodBanksLoaded(bloodBanks);
+                } else {
+                    callback.onBloodBanksLoaded(new ArrayList<BloodBankCenter>());
+                }
             }
-        }
-        return list;
+
+            @Override
+            public void onError(String errorMessage) {
+                callback.onBloodBanksLoaded(new ArrayList<BloodBankCenter>());
+            }
+        });
     }
 
     // ================= EMERGENCY REQUESTS =================
@@ -341,17 +325,10 @@ public class DataManager {
     }
 
     public EmergencyRequest getEmergencyRequestById(String id) {
-        if (id == null) return null;
-        for (EmergencyRequest req : localRequests) {
-            if (id.equalsIgnoreCase(req.getId())) {
-                return req;
-            }
-        }
         return null;
     }
 
     public void createEmergencyRequest(EmergencyRequest request, SimpleCallback callback) {
-        localRequests.add(0, request);
         ApiClient.getInstance().createEmergencyRequest(request, new ApiClient.ApiCallback<EmergencyRequest>() {
             @Override
             public void onSuccess(EmergencyRequest result) {
@@ -360,7 +337,7 @@ public class DataManager {
 
             @Override
             public void onError(String errorMessage) {
-                callback.onSuccess();
+                callback.onError(errorMessage);
             }
         });
     }
@@ -380,12 +357,6 @@ public class DataManager {
     }
 
     public void deleteEmergencyRequest(String id, final SimpleCallback callback) {
-        for (int i = 0; i < localRequests.size(); i++) {
-            if (localRequests.get(i).getId().equals(id)) {
-                localRequests.remove(i);
-                break;
-            }
-        }
         ApiClient.getInstance().deleteEmergencyRequest(id, new ApiClient.ApiCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
@@ -394,7 +365,7 @@ public class DataManager {
 
             @Override
             public void onError(String errorMessage) {
-                callback.onSuccess();
+                callback.onError(errorMessage);
             }
         });
     }

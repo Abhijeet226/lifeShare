@@ -2,6 +2,7 @@ package com.example.abhijeet.bloodbank;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -2253,6 +2254,54 @@ public class ApiClient {
                     }
                 } catch (Exception e) {
                     callback.onError("Failed to parse ETA message: " + e.getMessage());
+                }
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                callback.onError(errorMessage);
+            }
+        });
+    }
+
+    public void getBloodBanks(String city, final ApiCallback<List<BloodBankCenter>> callback) {
+        String endpoint = "/bloodbanks";
+        if (city != null && !city.isEmpty() && !"All".equalsIgnoreCase(city)) {
+            endpoint += "?city=" + Uri.encode(city);
+        }
+        get(endpoint, new InternalCallback() {
+            @Override
+            public void onSuccess(JsonObject response) {
+                try {
+                    List<BloodBankCenter> list = new ArrayList<>();
+                    if (response.has("bloodBanks") && response.get("bloodBanks").isJsonArray()) {
+                        for (JsonElement el : response.getAsJsonArray("bloodBanks")) {
+                            JsonObject b = el.getAsJsonObject();
+                            String id = b.has("id") && !b.get("id").isJsonNull() ? b.get("id").getAsString() : "";
+                            String name = b.has("name") && !b.get("name").isJsonNull() ? b.get("name").getAsString() : "Blood Bank";
+                            String address = b.has("address") && !b.get("address").isJsonNull() ? b.get("address").getAsString() : "";
+                            String bCity = b.has("city") && !b.get("city").isJsonNull() ? b.get("city").getAsString() : "Odisha";
+                            String phone = b.has("contactNumber") && !b.get("contactNumber").isJsonNull() ? b.get("contactNumber").getAsString() : "";
+                            String timings = b.has("timings") && !b.get("timings").isJsonNull() ? b.get("timings").getAsString() : "24x7 Open";
+                            String type = b.has("type") && !b.get("type").isJsonNull() ? b.get("type").getAsString() : "Blood Bank";
+                            double lat = 0.0;
+                            double lng = 0.0;
+                            if (b.has("location") && b.get("location").isJsonObject()) {
+                                JsonObject loc = b.getAsJsonObject("location");
+                                if (loc.has("coordinates") && loc.get("coordinates").isJsonArray()) {
+                                    JsonArray coords = loc.getAsJsonArray("coordinates");
+                                    if (coords.size() >= 2) {
+                                        lng = coords.get(0).getAsDouble();
+                                        lat = coords.get(1).getAsDouble();
+                                    }
+                                }
+                            }
+                            list.add(new BloodBankCenter(id, name, address, bCity, phone, timings, lat, lng, type));
+                        }
+                    }
+                    callback.onSuccess(list);
+                } catch (Exception e) {
+                    callback.onError("Failed to parse blood banks: " + e.getMessage());
                 }
             }
 

@@ -573,57 +573,18 @@ public class ProfileFragment extends Fragment {
 
     private void showNearbyCentersDialog() {
         if (getContext() == null) return;
-        final List<BloodBankCenter> centers = DataManager.getInstance(getContext()).getOdishaBloodBanks();
+        final Context ctx = getContext();
 
-        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_nearby_centers, null);
-        RecyclerView recyclerView = dialogView.findViewById(R.id.recycler_dialog_centers);
+        final View dialogView = LayoutInflater.from(ctx).inflate(R.layout.dialog_nearby_centers, null);
+        final RecyclerView recyclerView = dialogView.findViewById(R.id.recycler_dialog_centers);
         MaterialButton btnClose = dialogView.findViewById(R.id.btn_dialog_close_centers);
 
-        final AlertDialog dialog = new AlertDialog.Builder(getContext())
+        final AlertDialog dialog = new AlertDialog.Builder(ctx)
                 .setView(dialogView)
                 .create();
 
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        }
-
-        if (recyclerView != null) {
-            recyclerView.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(getContext()));
-            recyclerView.setAdapter(new RecyclerView.Adapter<CenterViewHolder>() {
-                @NonNull
-                @Override
-                public CenterViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-                    View item = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_nearby_center, parent, false);
-                    return new CenterViewHolder(item);
-                }
-
-                @Override
-                public void onBindViewHolder(@NonNull CenterViewHolder holder, int position) {
-                    final BloodBankCenter center = centers.get(position);
-                    holder.tvName.setText(center.getName());
-                    holder.tvCityTag.setText(center.getCity());
-                    holder.tvType.setText(center.getType());
-                    holder.tvTiming.setText(center.getTimings() != null ? center.getTimings() : "24x7 Emergency Service");
-
-                    holder.btnCall.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            if (center.getPhone() != null && !center.getPhone().isEmpty()) {
-                                Intent intent = new Intent(Intent.ACTION_DIAL);
-                                intent.setData(Uri.parse("tel:" + center.getPhone()));
-                                startActivity(intent);
-                            } else {
-                                Toast.makeText(getContext(), "Contact number unavailable", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    });
-                }
-
-                @Override
-                public int getItemCount() {
-                    return centers.size();
-                }
-            });
         }
 
         if (btnClose != null) {
@@ -635,7 +596,53 @@ public class ProfileFragment extends Fragment {
             });
         }
 
+        if (recyclerView != null) {
+            recyclerView.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(ctx));
+        }
+
         dialog.show();
+
+        DataManager.getInstance(ctx).fetchBloodBanks(null, new DataManager.BloodBankCallback() {
+            @Override
+            public void onBloodBanksLoaded(final List<BloodBankCenter> centers) {
+                if (getActivity() == null || getActivity().isFinishing() || recyclerView == null) return;
+                recyclerView.setAdapter(new RecyclerView.Adapter<CenterViewHolder>() {
+                    @NonNull
+                    @Override
+                    public CenterViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+                        View item = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_nearby_center, parent, false);
+                        return new CenterViewHolder(item);
+                    }
+
+                    @Override
+                    public void onBindViewHolder(@NonNull CenterViewHolder holder, int position) {
+                        final BloodBankCenter center = centers.get(position);
+                        holder.tvName.setText(center.getName());
+                        holder.tvCityTag.setText(center.getCity());
+                        holder.tvType.setText(center.getType());
+                        holder.tvTiming.setText(center.getTimings() != null ? center.getTimings() : "24x7 Emergency Service");
+
+                        holder.btnCall.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                if (center.getPhone() != null && !center.getPhone().isEmpty()) {
+                                    Intent intent = new Intent(Intent.ACTION_DIAL);
+                                    intent.setData(Uri.parse("tel:" + center.getPhone()));
+                                    startActivity(intent);
+                                } else {
+                                    Toast.makeText(getContext(), "Contact number unavailable", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
+                    }
+
+                    @Override
+                    public int getItemCount() {
+                        return centers != null ? centers.size() : 0;
+                    }
+                });
+            }
+        });
     }
 
     private void showHallOfFameBottomSheet() {
