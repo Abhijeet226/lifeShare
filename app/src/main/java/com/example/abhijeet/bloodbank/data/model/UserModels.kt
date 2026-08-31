@@ -10,13 +10,16 @@ data class UserProfile(
     val id: String = "",
     val name: String = "",
     val email: String = "",
+    @SerializedName("mobileNumber", alternate = ["mobile", "phone"])
     val mobileNumber: String = "",
     val bloodGroup: String = "O+",
+    @SerializedName("location", alternate = ["city", "cityName", "address"])
     val location: String = "Bhubaneswar",
     val role: String = "DONOR", // "DONOR", "RECIPIENT", "COORDINATOR", "ADMIN"
     val availabilityStatus: String = "AVAILABLE", // "AVAILABLE", "BUSY", "COOLDOWN"
     val isAvailable: Boolean = true,
     val lastDonationDate: String? = null,
+    @SerializedName("totalDonations", alternate = ["donationsCount", "donations"])
     val totalDonations: Int = 0,
     val hospitalId: String? = null,
     val hospitalName: String? = null,

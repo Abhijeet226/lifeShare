@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -159,7 +160,7 @@ fun SearchScreen() {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    items(donors, key = { it.id }) { donor ->
+                    itemsIndexed(donors, key = { index, donor -> if (donor.id.isNotBlank()) "${donor.id}_$index" else "dn_$index" }) { _, donor ->
                         DonorCard(
                             donor = donor,
                             onCall = {

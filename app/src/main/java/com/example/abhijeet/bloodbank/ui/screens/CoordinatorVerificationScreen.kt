@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -100,7 +101,7 @@ fun CoordinatorVerificationScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(vertical = 12.dp)
             ) {
-                items(pendingList, key = { it.responseId }) { item ->
+                itemsIndexed(pendingList, key = { index, item -> if (item.responseId.isNotBlank()) "${item.responseId}_$index" else "pv_$index" }) { _, item ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()

@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -95,7 +96,7 @@ fun DonationHistoryScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(vertical = 12.dp)
             ) {
-                items(historyList, key = { it.id }) { item ->
+                itemsIndexed(historyList, key = { index, item -> if (item.id.isNotBlank()) "${item.id}_$index" else "dh_$index" }) { _, item ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -295,7 +296,7 @@ fun DonationCertificateScreen(
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
-                        Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(

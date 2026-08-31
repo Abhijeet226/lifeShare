@@ -36,14 +36,39 @@ import com.example.abhijeet.bloodbank.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+import androidx.compose.animation.core.*
+import androidx.compose.ui.draw.scale
+
 @Composable
 fun SplashScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
     val context = LocalContext.current
+
+    // Infinite breathing/pulsing animation
+    val infiniteTransition = rememberInfiniteTransition(label = "SplashPulse")
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 0.92f,
+        targetValue = 1.06f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "LogoScale"
+    )
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.2f,
+        targetValue = 0.55f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "GlowAlpha"
+    )
+
     LaunchedEffect(Unit) {
-        delay(1200)
+        delay(1800)
         val dataManager = DataManager.getInstance(context)
         ApiRepository.getInstance().tokenProvider = { dataManager.authToken }
         if (dataManager.isLoggedIn) {
@@ -58,7 +83,7 @@ fun SplashScreen(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(BrandCrimsonDark, BrandCrimson, Color(0xFF1A0002))
+                    colors = listOf(BrandCrimsonDark, BrandCrimson, Color(0xFF150002))
                 )
             ),
         contentAlignment = Alignment.Center
@@ -67,28 +92,48 @@ fun SplashScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Surface(
-                modifier = Modifier.size(100.dp),
-                shape = CircleShape,
-                color = Color.White.copy(alpha = 0.15f),
-                shadowElevation = 8.dp
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "🩸",
-                        fontSize = 48.sp
-                    )
+            Box(contentAlignment = Alignment.Center) {
+                // Outer Pulse Ripple Glow Ring
+                Surface(
+                    modifier = Modifier
+                        .size(140.dp)
+                        .scale(scale * 1.08f),
+                    shape = CircleShape,
+                    color = Color.White.copy(alpha = glowAlpha * 0.4f)
+                ) {}
+
+                // Inner Pulse Circle
+                Surface(
+                    modifier = Modifier
+                        .size(116.dp)
+                        .scale(scale),
+                    shape = CircleShape,
+                    color = Color.White,
+                    shadowElevation = 12.dp
+                ) {
+                    Box(
+                        modifier = Modifier.padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.app_logo),
+                            contentDescription = "LifeShare App Icon",
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
                 }
             }
-            Spacer(modifier = Modifier.height(24.dp))
+
+            Spacer(modifier = Modifier.height(32.dp))
             Text(
                 text = "LifeShare",
-                style = MaterialTheme.typography.displayLarge.copy(color = Color.White, fontWeight = FontWeight.Bold)
+                style = MaterialTheme.typography.displayMedium.copy(color = Color.White, fontWeight = FontWeight.ExtraBold)
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = "Voluntary Blood & Emergency Coordination",
-                style = MaterialTheme.typography.bodyMedium.copy(color = Color.White.copy(alpha = 0.8f))
+                style = MaterialTheme.typography.bodyMedium.copy(color = Color.White.copy(alpha = 0.85f)),
+                textAlign = TextAlign.Center
             )
         }
     }
@@ -153,12 +198,17 @@ fun LoginScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 Surface(
-                    modifier = Modifier.size(72.dp),
+                    modifier = Modifier.size(80.dp),
                     shape = CircleShape,
-                    color = BrandCrimsonContainer
+                    color = BrandCrimsonContainer,
+                    shadowElevation = 4.dp
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text("🩸", fontSize = 36.sp)
+                    Box(modifier = Modifier.padding(14.dp), contentAlignment = Alignment.Center) {
+                        Image(
+                            painter = painterResource(id = R.drawable.app_logo),
+                            contentDescription = "LifeShare Logo",
+                            modifier = Modifier.fillMaxSize()
+                        )
                     }
                 }
 

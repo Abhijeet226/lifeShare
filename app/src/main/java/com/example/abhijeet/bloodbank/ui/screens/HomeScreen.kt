@@ -1,10 +1,12 @@
 package com.example.abhijeet.bloodbank.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -78,13 +80,15 @@ fun HomeScreen(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Surface(
-                            modifier = Modifier.size(36.dp),
+                            modifier = Modifier.size(38.dp),
                             shape = CircleShape,
-                            color = BrandCrimson
+                            color = BrandCrimson.copy(alpha = 0.1f)
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text("🩸", fontSize = 18.sp)
-                            }
+                            Image(
+                                painter = androidx.compose.ui.res.painterResource(id = com.example.abhijeet.bloodbank.R.drawable.app_logo),
+                                contentDescription = "LifeShare Logo",
+                                modifier = Modifier.padding(4.dp)
+                            )
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
@@ -255,7 +259,7 @@ fun HomeScreen(
                     }
                 }
             } else {
-                items(emergencies, key = { it.id }) { req ->
+                itemsIndexed(emergencies, key = { index, req -> if (req.id.isNotBlank()) "${req.id}_$index" else "em_$index" }) { _, req ->
                     EmergencyItemCard(
                         request = req,
                         onClick = { onNavigateToEmergencyDetail(req.id) }
@@ -334,7 +338,7 @@ fun EmergencyItemCard(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-            Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             Spacer(modifier = Modifier.height(12.dp))
 
             Row(

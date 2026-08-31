@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -210,7 +211,7 @@ fun EmergencyChatScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(vertical = 8.dp)
             ) {
-                items(messages, key = { it.id }) { msg ->
+                itemsIndexed(messages, key = { index, msg -> if (msg.id.isNotBlank()) "${msg.id}_$index" else "msg_$index" }) { _, msg ->
                     ChatBubble(message = msg)
                 }
             }

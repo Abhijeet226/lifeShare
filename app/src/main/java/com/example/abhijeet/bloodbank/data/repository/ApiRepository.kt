@@ -63,7 +63,19 @@ class ApiRepository private constructor() {
             val responseBody = response.body?.string().orEmpty()
 
             val json = try {
-                JsonParser.parseString(responseBody).asJsonObject
+                val element = JsonParser.parseString(responseBody)
+                if (element.isJsonObject) {
+                    element.asJsonObject
+                } else if (element.isJsonArray) {
+                    val obj = JsonObject()
+                    obj.add("data", element.asJsonArray)
+                    obj.add("emergencies", element.asJsonArray)
+                    obj.add("donors", element.asJsonArray)
+                    obj.add("notifications", element.asJsonArray)
+                    obj
+                } else {
+                    JsonObject()
+                }
             } catch (e: Exception) {
                 val obj = JsonObject()
                 obj.addProperty("raw", responseBody)

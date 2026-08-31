@@ -135,7 +135,7 @@ fun ProfileScreen(
                     }
 
                     Spacer(modifier = Modifier.height(20.dp))
-                    Divider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f))
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Row(
@@ -186,14 +186,14 @@ fun ProfileScreen(
                         subtitle = "View tamper-proof certificates & QR receipts",
                         onClick = onNavigateToHistory
                     )
-                    Divider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                     ProfileMenuRow(
                         icon = Icons.Default.Feedback,
                         title = "Feedback & Suggestions",
                         subtitle = "Help us improve voluntary blood reach",
                         onClick = onNavigateToFeedback
                     )
-                    Divider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                     ProfileMenuRow(
                         icon = Icons.Default.Info,
                         title = "About LifeShare",

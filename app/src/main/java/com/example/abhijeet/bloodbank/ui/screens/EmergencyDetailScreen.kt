@@ -182,7 +182,7 @@ fun EmergencyDetailScreen(
                             }
 
                             Spacer(modifier = Modifier.height(16.dp))
-                            Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                             Spacer(modifier = Modifier.height(12.dp))
 
                             Row(
