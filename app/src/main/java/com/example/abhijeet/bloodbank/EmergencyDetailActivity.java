@@ -95,6 +95,27 @@ public class EmergencyDetailActivity extends AppCompatActivity {
         }
 
         initViews();
+
+        String patientName = getIntent().getStringExtra("patient_name");
+        if (patientName != null && !patientName.isEmpty()) {
+            currentEmergency = new EmergencyRequest(
+                    emergencyId,
+                    patientName,
+                    getIntent().getStringExtra("hospital_name"),
+                    getIntent().getStringExtra("city"),
+                    getIntent().getStringExtra("blood_group"),
+                    getIntent().getIntExtra("units_required", 1),
+                    getIntent().getStringExtra("contact_number")
+            );
+            currentEmergency.setHospitalAddress(getIntent().getStringExtra("hospital_address"));
+            currentEmergency.setUrgency(getIntent().getStringExtra("urgency"));
+            currentEmergency.setStatus(getIntent().getStringExtra("status"));
+            currentEmergency.setHospitalLatitude(getIntent().getDoubleExtra("hospital_lat", 0.0));
+            currentEmergency.setHospitalLongitude(getIntent().getDoubleExtra("hospital_lng", 0.0));
+
+            bindPreloadedData(currentEmergency);
+        }
+
         loadEmergencyDetails();
     }
 
@@ -245,9 +266,32 @@ public class EmergencyDetailActivity extends AppCompatActivity {
         });
     }
 
+    private void bindPreloadedData(EmergencyRequest req) {
+        if (layoutDetailSkeleton != null) layoutDetailSkeleton.setVisibility(View.GONE);
+        if (layoutDetailContent != null) layoutDetailContent.setVisibility(View.VISIBLE);
+
+        tvBloodGroup.setText(req.getBloodGroup());
+        tvPatient.setText(req.getPatientName());
+        tvUnits.setText(req.getUnitsRequired() + (req.getUnitsRequired() == 1 ? " Unit Required" : " Units Required"));
+        tvUrgency.setText(req.getUrgency());
+
+        tvHospital.setText(req.getHospital());
+        if (req.getHospitalAddress() != null && !req.getHospitalAddress().isEmpty()) {
+            tvHospitalAddress.setText(req.getHospitalAddress());
+            tvHospitalAddress.setVisibility(View.VISIBLE);
+        } else {
+            tvHospitalAddress.setVisibility(View.GONE);
+        }
+
+        tvStatus.setText(req.getStatusDisplay());
+        coordinatorPhone = req.getContactNumber();
+    }
+
     private void loadEmergencyDetails() {
-        if (layoutDetailSkeleton != null) layoutDetailSkeleton.setVisibility(View.VISIBLE);
-        if (layoutDetailContent != null) layoutDetailContent.setVisibility(View.GONE);
+        if (currentEmergency == null) {
+            if (layoutDetailSkeleton != null) layoutDetailSkeleton.setVisibility(View.VISIBLE);
+            if (layoutDetailContent != null) layoutDetailContent.setVisibility(View.GONE);
+        }
 
         ApiClient.getInstance().getEmergencyDetail(emergencyId, new ApiClient.ApiCallback<ApiClient.EmergencyDetailResponse>() {
             @Override
@@ -256,7 +300,7 @@ public class EmergencyDetailActivity extends AppCompatActivity {
                 if (detail != null && detail.emergency != null) {
                     currentEmergency = detail.emergency;
                     bindData(detail);
-                } else {
+                } else if (currentEmergency == null) {
                     if (layoutDetailSkeleton != null) layoutDetailSkeleton.setVisibility(View.GONE);
                     Toast.makeText(EmergencyDetailActivity.this, "This emergency request is no longer active.", Toast.LENGTH_LONG).show();
                     finish();
@@ -267,8 +311,12 @@ public class EmergencyDetailActivity extends AppCompatActivity {
             public void onError(String error) {
                 if (isFinishing() || isDestroyed()) return;
                 if (layoutDetailSkeleton != null) layoutDetailSkeleton.setVisibility(View.GONE);
-                Toast.makeText(EmergencyDetailActivity.this, "Unable to load emergency details: " + error, Toast.LENGTH_SHORT).show();
-                finish();
+                if (currentEmergency != null) {
+                    if (layoutDetailContent != null) layoutDetailContent.setVisibility(View.VISIBLE);
+                } else {
+                    Toast.makeText(EmergencyDetailActivity.this, "Unable to load emergency details: " + error, Toast.LENGTH_SHORT).show();
+                    finish();
+                }
             }
         });
     }

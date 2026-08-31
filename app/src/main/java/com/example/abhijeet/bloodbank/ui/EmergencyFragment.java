@@ -90,6 +90,17 @@ public class EmergencyFragment extends Fragment {
             public void onViewRequested(EmergencyRequest req) {
                 Intent intent = new Intent(getContext(), EmergencyDetailActivity.class);
                 intent.putExtra("emergency_id", req.getId());
+                intent.putExtra("patient_name", req.getPatientName());
+                intent.putExtra("hospital_name", req.getHospital());
+                intent.putExtra("hospital_address", req.getHospitalAddress());
+                intent.putExtra("city", req.getCity());
+                intent.putExtra("blood_group", req.getBloodGroup());
+                intent.putExtra("units_required", req.getUnitsRequired());
+                intent.putExtra("contact_number", req.getContactNumber());
+                intent.putExtra("urgency", req.getUrgency());
+                intent.putExtra("status", req.getStatus());
+                intent.putExtra("hospital_lat", req.getHospitalLatitude());
+                intent.putExtra("hospital_lng", req.getHospitalLongitude());
                 startActivity(intent);
             }
         });

@@ -748,95 +748,99 @@ public class ApiClient {
         get("/emergency/" + emergencyId, new InternalCallback() {
             @Override
             public void onSuccess(JsonObject body) {
-                if (body.has("emergency") && body.get("emergency").isJsonObject()) {
-                    JsonObject obj = body.getAsJsonObject("emergency");
-                    EmergencyRequest req = new EmergencyRequest(
-                            optString(obj, "_id", optString(obj, "id", "")),
-                            optString(obj, "patientName", "Patient"),
-                            optString(obj, "hospital", "Hospital"),
-                            optString(obj, "city", "Bhubaneswar"),
-                            optString(obj, "bloodGroup", "O+"),
-                            optInt(obj, "unitsRequired", optInt(obj, "unitsNeeded", 1)),
-                            optString(obj, "contactNumber", ""),
-                            optString(obj, "postedBy", "")
-                    );
-                    req.setHospitalId(optString(obj, "hospitalId", ""));
-                    req.setHospitalName(optString(obj, "hospitalName", optString(obj, "hospital", "")));
-                    req.setHospitalAddress(optString(obj, "hospitalAddress", ""));
-                    req.setAcceptedCount(optInt(obj, "acceptedCount", 0));
-                    req.setUnitsFulfilled(optInt(obj, "unitsFulfilled", 0));
-                    req.setUrgency(optString(obj, "urgency", "URGENT"));
-                    req.setStatus(optString(obj, "status", "SEARCHING"));
-                    req.setFulfilled(obj.has("isFulfilled") && obj.get("isFulfilled").getAsBoolean());
+                try {
+                    if (body.has("emergency") && body.get("emergency").isJsonObject()) {
+                        JsonObject obj = body.getAsJsonObject("emergency");
+                        EmergencyRequest req = new EmergencyRequest(
+                                optString(obj, "_id", optString(obj, "id", "")),
+                                optString(obj, "patientName", "Patient"),
+                                optString(obj, "hospital", "Hospital"),
+                                optString(obj, "city", "Bhubaneswar"),
+                                optString(obj, "bloodGroup", "O+"),
+                                optInt(obj, "unitsRequired", optInt(obj, "unitsNeeded", 1)),
+                                optString(obj, "contactNumber", ""),
+                                optString(obj, "postedBy", "")
+                        );
+                        req.setHospitalId(optString(obj, "hospitalId", ""));
+                        req.setHospitalName(optString(obj, "hospitalName", optString(obj, "hospital", "")));
+                        req.setHospitalAddress(optString(obj, "hospitalAddress", ""));
+                        req.setAcceptedCount(optInt(obj, "acceptedCount", 0));
+                        req.setUnitsFulfilled(optInt(obj, "unitsFulfilled", 0));
+                        req.setUrgency(optString(obj, "urgency", "URGENT"));
+                        req.setStatus(optString(obj, "status", "SEARCHING"));
+                        req.setFulfilled(obj.has("isFulfilled") && obj.get("isFulfilled").getAsBoolean());
 
-                    if (obj.has("hospitalLocation") && obj.get("hospitalLocation").isJsonObject()) {
-                        JsonObject hl = obj.getAsJsonObject("hospitalLocation");
-                        if (hl.has("coordinates") && hl.get("coordinates").isJsonArray()) {
-                            JsonArray coords = hl.getAsJsonArray("coordinates");
-                            if (coords.size() >= 2) {
-                                req.setHospitalLongitude(coords.get(0).getAsDouble());
-                                req.setHospitalLatitude(coords.get(1).getAsDouble());
+                        if (obj.has("hospitalLocation") && obj.get("hospitalLocation").isJsonObject()) {
+                            JsonObject hl = obj.getAsJsonObject("hospitalLocation");
+                            if (hl.has("coordinates") && hl.get("coordinates").isJsonArray()) {
+                                JsonArray coords = hl.getAsJsonArray("coordinates");
+                                if (coords.size() >= 2) {
+                                    req.setHospitalLongitude(coords.get(0).getAsDouble());
+                                    req.setHospitalLatitude(coords.get(1).getAsDouble());
+                                }
                             }
                         }
-                    }
 
-                    EmergencyDetailResponse detail = new EmergencyDetailResponse();
-                    detail.emergency = req;
-                    detail.isRequester = body.has("isRequester") && body.get("isRequester").getAsBoolean();
+                        EmergencyDetailResponse detail = new EmergencyDetailResponse();
+                        detail.emergency = req;
+                        detail.isRequester = body.has("isRequester") && body.get("isRequester").getAsBoolean();
 
-                    if (body.has("stats") && body.get("stats").isJsonObject()) {
-                        JsonObject stats = body.getAsJsonObject("stats");
-                        detail.unitsRequired = optInt(stats, "unitsRequired", req.getUnitsRequired());
-                        detail.acceptedCount = optInt(stats, "acceptedCount", req.getAcceptedCount());
-                        detail.remainingUnits = optInt(stats, "remainingUnits", req.getRemainingUnits());
-                        detail.notifiedCount = optInt(stats, "notifiedCount", 0);
-                        detail.responseCount = optInt(stats, "responseCount", 0);
-                        detail.isFulfilled = stats.has("isFulfilled") && stats.get("isFulfilled").getAsBoolean();
-                    }
-
-                    if (body.has("userResponseStatus") && !body.get("userResponseStatus").isJsonNull()) {
-                        detail.userResponseStatus = body.get("userResponseStatus").getAsString();
-                    }
-
-                    if (body.has("myJourney") && body.get("myJourney").isJsonObject()) {
-                        JsonObject mj = body.getAsJsonObject("myJourney");
-                        DonorJourneyInfo journey = new DonorJourneyInfo();
-                        journey.status = optString(mj, "status", "NOTIFIED");
-                        journey.viewedAt = optString(mj, "viewedAt", null);
-                        journey.acceptedAt = optString(mj, "acceptedAt", null);
-                        journey.travellingAt = optString(mj, "travellingAt", null);
-                        journey.arrivedAt = optString(mj, "arrivedAt", null);
-                        journey.donatedAt = optString(mj, "donatedAt", null);
-                        journey.completedAt = optString(mj, "completedAt", null);
-                        journey.isAccepted = mj.has("isAccepted") && mj.get("isAccepted").getAsBoolean();
-                        journey.canStartJourney = mj.has("canStartJourney") && mj.get("canStartJourney").getAsBoolean();
-                        journey.canMarkArrived = mj.has("canMarkArrived") && mj.get("canMarkArrived").getAsBoolean();
-                        journey.isPendingVerification = mj.has("isPendingVerification") && mj.get("isPendingVerification").getAsBoolean();
-                        journey.isCompleted = mj.has("isCompleted") && mj.get("isCompleted").getAsBoolean();
-                        detail.myJourney = journey;
-                    }
-
-                    if (body.has("acceptedDonors") && body.get("acceptedDonors").isJsonArray()) {
-                        JsonArray donorsArr = body.getAsJsonArray("acceptedDonors");
-                        for (JsonElement el : donorsArr) {
-                            if (!el.isJsonObject()) continue;
-                            JsonObject dObj = el.getAsJsonObject();
-                            AcceptedDonorItem item = new AcceptedDonorItem();
-                            item.donorId = optString(dObj, "donorId", "");
-                            item.name = optString(dObj, "name", "Voluntary Donor");
-                            item.bloodGroup = optString(dObj, "bloodGroup", req.getBloodGroup());
-                            item.verificationStatus = optString(dObj, "verificationStatus", "UNVERIFIED");
-                            item.journeyStatus = optString(dObj, "journeyStatus", "ACCEPTED");
-                            item.acceptedAt = optString(dObj, "acceptedAt", null);
-                            item.travellingAt = optString(dObj, "travellingAt", null);
-                            item.arrivedAt = optString(dObj, "arrivedAt", null);
-                            detail.acceptedDonors.add(item);
+                        if (body.has("stats") && body.get("stats").isJsonObject()) {
+                            JsonObject stats = body.getAsJsonObject("stats");
+                            detail.unitsRequired = optInt(stats, "unitsRequired", req.getUnitsRequired());
+                            detail.acceptedCount = optInt(stats, "acceptedCount", req.getAcceptedCount());
+                            detail.remainingUnits = optInt(stats, "remainingUnits", req.getRemainingUnits());
+                            detail.notifiedCount = optInt(stats, "notifiedCount", 0);
+                            detail.responseCount = optInt(stats, "responseCount", 0);
+                            detail.isFulfilled = stats.has("isFulfilled") && stats.get("isFulfilled").getAsBoolean();
                         }
-                    }
 
-                    callback.onSuccess(detail);
-                } else {
-                    callback.onError("Emergency details not found");
+                        if (body.has("userResponseStatus") && !body.get("userResponseStatus").isJsonNull()) {
+                            detail.userResponseStatus = body.get("userResponseStatus").getAsString();
+                        }
+
+                        if (body.has("myJourney") && body.get("myJourney").isJsonObject()) {
+                            JsonObject mj = body.getAsJsonObject("myJourney");
+                            DonorJourneyInfo journey = new DonorJourneyInfo();
+                            journey.status = optString(mj, "status", "NOTIFIED");
+                            journey.viewedAt = optString(mj, "viewedAt", null);
+                            journey.acceptedAt = optString(mj, "acceptedAt", null);
+                            journey.travellingAt = optString(mj, "travellingAt", null);
+                            journey.arrivedAt = optString(mj, "arrivedAt", null);
+                            journey.donatedAt = optString(mj, "donatedAt", null);
+                            journey.completedAt = optString(mj, "completedAt", null);
+                            journey.isAccepted = mj.has("isAccepted") && mj.get("isAccepted").getAsBoolean();
+                            journey.canStartJourney = mj.has("canStartJourney") && mj.get("canStartJourney").getAsBoolean();
+                            journey.canMarkArrived = mj.has("canMarkArrived") && mj.get("canMarkArrived").getAsBoolean();
+                            journey.isPendingVerification = mj.has("isPendingVerification") && mj.get("isPendingVerification").getAsBoolean();
+                            journey.isCompleted = mj.has("isCompleted") && mj.get("isCompleted").getAsBoolean();
+                            detail.myJourney = journey;
+                        }
+
+                        if (body.has("acceptedDonors") && body.get("acceptedDonors").isJsonArray()) {
+                            JsonArray donorsArr = body.getAsJsonArray("acceptedDonors");
+                            for (JsonElement el : donorsArr) {
+                                if (!el.isJsonObject()) continue;
+                                JsonObject dObj = el.getAsJsonObject();
+                                AcceptedDonorItem item = new AcceptedDonorItem();
+                                item.donorId = optString(dObj, "donorId", "");
+                                item.name = optString(dObj, "name", "Voluntary Donor");
+                                item.bloodGroup = optString(dObj, "bloodGroup", req.getBloodGroup());
+                                item.verificationStatus = optString(dObj, "verificationStatus", "UNVERIFIED");
+                                item.journeyStatus = optString(dObj, "journeyStatus", "ACCEPTED");
+                                item.acceptedAt = optString(dObj, "acceptedAt", null);
+                                item.travellingAt = optString(dObj, "travellingAt", null);
+                                item.arrivedAt = optString(dObj, "arrivedAt", null);
+                                detail.acceptedDonors.add(item);
+                            }
+                        }
+
+                        callback.onSuccess(detail);
+                    } else {
+                        callback.onError("Emergency details not found");
+                    }
+                } catch (Exception e) {
+                    callback.onError("Failed to parse emergency details: " + e.getMessage());
                 }
             }
 

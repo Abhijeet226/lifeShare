@@ -77,7 +77,13 @@ public class LiveDonorTrackingActivity extends AppCompatActivity {
         // OSMDroid configuration initialization
         Context ctx = getApplicationContext();
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
-        Configuration.getInstance().setUserAgentValue(getPackageName());
+        Configuration.getInstance().setUserAgentValue("LifeShareApp/2.0 (Android; OpenStreetMap)");
+
+        java.io.File osmBasePath = new java.io.File(ctx.getCacheDir(), "osmdroid");
+        java.io.File osmTilesPath = new java.io.File(osmBasePath, "tiles");
+        if (!osmTilesPath.exists()) osmTilesPath.mkdirs();
+        Configuration.getInstance().setOsmdroidBasePath(osmBasePath);
+        Configuration.getInstance().setOsmdroidTileCache(osmTilesPath);
 
         WindowHelper.applyEdgeToEdge(this);
         setContentView(R.layout.activity_live_donor_tracking);
@@ -111,8 +117,9 @@ public class LiveDonorTrackingActivity extends AppCompatActivity {
     private void setupMap() {
         mapView.setTileSource(TileSourceFactory.MAPNIK);
         mapView.setMultiTouchControls(true);
+        mapView.setTilesScaledToDpi(true);
         mapView.getZoomController().setVisibility(org.osmdroid.views.CustomZoomButtonsController.Visibility.NEVER);
-        mapView.getController().setZoom(14.0);
+        mapView.getController().setZoom(15.0);
 
         GeoPoint defaultCenter = new GeoPoint(donorLat, donorLng);
         mapView.getController().setCenter(defaultCenter);
