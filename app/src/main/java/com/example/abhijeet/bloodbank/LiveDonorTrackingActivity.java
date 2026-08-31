@@ -54,9 +54,11 @@ public class LiveDonorTrackingActivity extends AppCompatActivity {
     private ImageView btnExternalMaps;
     private MaterialButton btnOpenChat, btnCall;
 
-    private Marker donorMarker;
+    private final List<ApiClient.DonorTrackInfo> activeDonors = new ArrayList<>();
+
     private Marker hospitalMarker;
-    private Polyline routePolyline;
+    private final List<Marker> donorMarkers = new ArrayList<>();
+    private final List<Polyline> routePolylines = new ArrayList<>();
 
     private double donorLat = 20.2961;
     private double donorLng = 85.8245;
@@ -199,31 +201,39 @@ public class LiveDonorTrackingActivity extends AppCompatActivity {
             return;
         }
 
-        ApiClient.getInstance().getEmergencyDetail(emergencyId, new ApiClient.ApiCallback<ApiClient.EmergencyDetailResponse>() {
+        ApiClient.getInstance().getEmergencyTracking(emergencyId, new ApiClient.ApiCallback<ApiClient.EmergencyTrackingResponse>() {
             @Override
-            public void onSuccess(ApiClient.EmergencyDetailResponse detail) {
-                if (isFinishing() || isDestroyed() || detail == null || detail.emergency == null) {
+            public void onSuccess(ApiClient.EmergencyTrackingResponse tracking) {
+                if (isFinishing() || isDestroyed() || tracking == null) {
                     plotMockTrackingRoute();
                     return;
                 }
 
-                EmergencyRequest req = detail.emergency;
-                if (req.getPatientName() != null) patientName = req.getPatientName();
-                if (req.getHospital() != null) hospitalName = req.getHospital();
-                if (req.getHospitalAddress() != null) hospitalAddress = req.getHospitalAddress();
-                if (req.getBloodGroup() != null) bloodGroup = req.getBloodGroup();
-                if (req.getContactNumber() != null) contactPhone = req.getContactNumber();
-
-                if (req.getHospitalLatitude() != 0.0 && req.getHospitalLongitude() != 0.0) {
-                    hospLat = req.getHospitalLatitude();
-                    hospLng = req.getHospitalLongitude();
+                if (tracking.patientName != null) patientName = tracking.patientName;
+                if (tracking.hospital != null) hospitalName = tracking.hospital;
+                if (tracking.hospitalAddress != null) hospitalAddress = tracking.hospitalAddress;
+                if (tracking.hospitalLat != 0.0 && tracking.hospitalLng != 0.0) {
+                    hospLat = tracking.hospitalLat;
+                    hospLng = tracking.hospitalLng;
                 }
 
-                // Check donor location
-                double[] userLoc = DataManager.getInstance(LiveDonorTrackingActivity.this).getLastKnownLocation();
-                if (userLoc != null && userLoc[0] != 0.0) {
-                    donorLat = userLoc[0];
-                    donorLng = userLoc[1];
+                activeDonors.clear();
+                if (tracking.donors != null && !tracking.donors.isEmpty()) {
+                    activeDonors.addAll(tracking.donors);
+                    if (!activeDonors.isEmpty()) {
+                        ApiClient.DonorTrackInfo first = activeDonors.get(0);
+                        donorLat = first.latitude;
+                        donorLng = first.longitude;
+                        if (first.bloodGroup != null) bloodGroup = first.bloodGroup;
+                        if (first.phone != null && !first.phone.isEmpty()) contactPhone = first.phone;
+                    }
+                } else {
+                    // Fallback to local user location if donor
+                    double[] userLoc = DataManager.getInstance(LiveDonorTrackingActivity.this).getLastKnownLocation();
+                    if (userLoc != null && userLoc[0] != 0.0) {
+                        donorLat = userLoc[0];
+                        donorLng = userLoc[1];
+                    }
                 }
 
                 renderTrackingUI();
@@ -238,11 +248,21 @@ public class LiveDonorTrackingActivity extends AppCompatActivity {
     }
 
     private void refreshLiveCoordinates() {
-        double[] userLoc = DataManager.getInstance(this).getLastKnownLocation();
-        if (userLoc != null && userLoc[0] != 0.0) {
-            donorLat = userLoc[0];
-            donorLng = userLoc[1];
-            updateDonorMarkerPosition();
+        if (emergencyId != null && !emergencyId.isEmpty()) {
+            ApiClient.getInstance().getEmergencyTracking(emergencyId, new ApiClient.ApiCallback<ApiClient.EmergencyTrackingResponse>() {
+                @Override
+                public void onSuccess(ApiClient.EmergencyTrackingResponse tracking) {
+                    if (isFinishing() || isDestroyed() || tracking == null) return;
+                    if (tracking.donors != null && !tracking.donors.isEmpty()) {
+                        activeDonors.clear();
+                        activeDonors.addAll(tracking.donors);
+                        drawMapOverlays();
+                    }
+                }
+
+                @Override
+                public void onError(String errorMessage) {}
+            });
         }
     }
 
@@ -251,19 +271,35 @@ public class LiveDonorTrackingActivity extends AppCompatActivity {
         tvHospitalName.setText(hospitalName);
         tvBloodBadge.setText(bloodGroup);
 
-        double distKm = LocationHelper.calculateDistanceKm(donorLat, donorLng, hospLat, hospLng);
-        int estMinutes = Math.max(4, (int) Math.round((distKm / 28.0) * 60)); // assume 28 km/h city speed
-
-        tvEtaHeadline.setText("Estimated Arrival: ~" + estMinutes + " mins");
-        tvDistanceSub.setText(String.format("%.1f km remaining along driving route", distKm));
+        if (activeDonors.size() > 1) {
+            int minEta = 999;
+            for (ApiClient.DonorTrackInfo d : activeDonors) {
+                if (d.etaMinutes < minEta && d.etaMinutes > 0) minEta = d.etaMinutes;
+            }
+            if (minEta == 999) minEta = 15;
+            if (tvTrackingStatusHeader != null) {
+                tvTrackingStatusHeader.setText("Fleet Radar (" + activeDonors.size() + " Donors Active)");
+            }
+            tvEtaHeadline.setText(activeDonors.size() + " Donors En Route • Next ETA ~" + minEta + " mins");
+            tvDistanceSub.setText("All responding voluntary donors converging on " + hospitalName);
+        } else {
+            double distKm = LocationHelper.calculateDistanceKm(donorLat, donorLng, hospLat, hospLng);
+            int estMinutes = Math.max(4, (int) Math.round((distKm / 28.0) * 60)); // assume 28 km/h city speed
+            if (tvTrackingStatusHeader != null) {
+                tvTrackingStatusHeader.setText("Live Transit Tracker");
+            }
+            tvEtaHeadline.setText("Estimated Arrival: ~" + estMinutes + " mins");
+            tvDistanceSub.setText(String.format("%.1f km remaining along driving route", distKm));
+        }
 
         drawMapOverlays();
     }
 
     private void drawMapOverlays() {
         mapView.getOverlays().clear();
+        donorMarkers.clear();
+        routePolylines.clear();
 
-        GeoPoint donorPoint = new GeoPoint(donorLat, donorLng);
         GeoPoint hospPoint = new GeoPoint(hospLat, hospLng);
 
         // 1. Destination Hospital Marker
@@ -276,45 +312,50 @@ public class LiveDonorTrackingActivity extends AppCompatActivity {
         if (hospIcon != null) hospitalMarker.setIcon(hospIcon);
         mapView.getOverlays().add(hospitalMarker);
 
-        // 2. Moving Donor Marker
-        donorMarker = new Marker(mapView);
-        donorMarker.setPosition(donorPoint);
-        donorMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER);
-        donorMarker.setTitle("Donor in Transit");
-        donorMarker.setSnippet("Active Volunteer");
-        Drawable donorIcon = ContextCompat.getDrawable(this, R.drawable.ic_donor_transit);
-        if (donorIcon != null) donorMarker.setIcon(donorIcon);
-        mapView.getOverlays().add(donorMarker);
+        // 2. Render Donors (Fleet or Single)
+        if (!activeDonors.isEmpty()) {
+            for (int i = 0; i < activeDonors.size(); i++) {
+                ApiClient.DonorTrackInfo d = activeDonors.get(i);
+                GeoPoint dPoint = new GeoPoint(d.latitude, d.longitude);
 
-        // 3. Road Route Polyline (Curved driving path)
-        routePolyline = new Polyline();
-        routePolyline.setColor(Color.parseColor("#E11D48"));
-        routePolyline.setWidth(10.0f);
+                Marker dMarker = new Marker(mapView);
+                dMarker.setPosition(dPoint);
+                dMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER);
+                dMarker.setTitle(d.name + " (" + d.bloodGroup + ")");
+                dMarker.setSnippet("Status: " + d.journeyStatusDisplay + " • ETA: ~" + d.etaMinutes + " mins");
+                Drawable donorIcon = ContextCompat.getDrawable(this, R.drawable.ic_donor_transit);
+                if (donorIcon != null) dMarker.setIcon(donorIcon);
+                donorMarkers.add(dMarker);
+                mapView.getOverlays().add(dMarker);
 
-        List<GeoPoint> geoPoints = generateSmoothRoutePoints(donorPoint, hospPoint);
-        routePolyline.setPoints(geoPoints);
-        mapView.getOverlays().add(routePolyline);
+                // Polyline path
+                Polyline line = new Polyline();
+                line.setColor(i == 0 ? Color.parseColor("#E11D48") : (i == 1 ? Color.parseColor("#0284C7") : Color.parseColor("#16A34A")));
+                line.setWidth(10.0f);
+                line.setPoints(generateSmoothRoutePoints(dPoint, hospPoint));
+                routePolylines.add(line);
+                mapView.getOverlays().add(line);
+            }
+        } else {
+            GeoPoint donorPoint = new GeoPoint(donorLat, donorLng);
+            Marker singleMarker = new Marker(mapView);
+            singleMarker.setPosition(donorPoint);
+            singleMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER);
+            singleMarker.setTitle("Donor in Transit");
+            singleMarker.setSnippet("Active Volunteer");
+            Drawable donorIcon = ContextCompat.getDrawable(this, R.drawable.ic_donor_transit);
+            if (donorIcon != null) singleMarker.setIcon(donorIcon);
+            mapView.getOverlays().add(singleMarker);
+
+            Polyline routePolyline = new Polyline();
+            routePolyline.setColor(Color.parseColor("#E11D48"));
+            routePolyline.setWidth(10.0f);
+            routePolyline.setPoints(generateSmoothRoutePoints(donorPoint, hospPoint));
+            mapView.getOverlays().add(routePolyline);
+        }
 
         mapView.invalidate();
         fitRouteBounds();
-    }
-
-    private void updateDonorMarkerPosition() {
-        if (donorMarker != null) {
-            GeoPoint newPoint = new GeoPoint(donorLat, donorLng);
-            donorMarker.setPosition(newPoint);
-
-            double distKm = LocationHelper.calculateDistanceKm(donorLat, donorLng, hospLat, hospLng);
-            int estMinutes = Math.max(3, (int) Math.round((distKm / 28.0) * 60));
-            tvEtaHeadline.setText("Estimated Arrival: ~" + estMinutes + " mins");
-            tvDistanceSub.setText(String.format("%.1f km remaining along driving route", distKm));
-
-            if (routePolyline != null) {
-                GeoPoint hospPoint = new GeoPoint(hospLat, hospLng);
-                routePolyline.setPoints(generateSmoothRoutePoints(newPoint, hospPoint));
-            }
-            mapView.invalidate();
-        }
     }
 
     private List<GeoPoint> generateSmoothRoutePoints(GeoPoint start, GeoPoint end) {
@@ -332,10 +373,29 @@ public class LiveDonorTrackingActivity extends AppCompatActivity {
 
     private void fitRouteBounds() {
         try {
-            double minLat = Math.min(donorLat, hospLat) - 0.008;
-            double maxLat = Math.max(donorLat, hospLat) + 0.008;
-            double minLng = Math.min(donorLng, hospLng) - 0.008;
-            double maxLng = Math.max(donorLng, hospLng) + 0.008;
+            double minLat = hospLat;
+            double maxLat = hospLat;
+            double minLng = hospLng;
+            double maxLng = hospLng;
+
+            if (!activeDonors.isEmpty()) {
+                for (ApiClient.DonorTrackInfo d : activeDonors) {
+                    minLat = Math.min(minLat, d.latitude);
+                    maxLat = Math.max(maxLat, d.latitude);
+                    minLng = Math.min(minLng, d.longitude);
+                    maxLng = Math.max(maxLng, d.longitude);
+                }
+            } else {
+                minLat = Math.min(minLat, donorLat);
+                maxLat = Math.max(maxLat, donorLat);
+                minLng = Math.min(minLng, donorLng);
+                maxLng = Math.max(maxLng, donorLng);
+            }
+
+            minLat -= 0.008;
+            maxLat += 0.008;
+            minLng -= 0.008;
+            maxLng += 0.008;
 
             BoundingBox box = new BoundingBox(maxLat, maxLng, minLat, minLng);
             mapView.zoomToBoundingBox(box, true, 80);

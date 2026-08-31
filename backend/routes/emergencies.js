@@ -286,7 +286,7 @@ router.get('/:id', optionalToken, async (req, res) => {
 
     // Fetch all responses with populated donor public fields
     const responses = await EmergencyResponse.find({ requestId: emergency._id })
-      .populate('donorId', 'name bloodGroup verificationStatus accountStatus donorId');
+      .populate('donorId', 'name mobile bloodGroup verificationStatus accountStatus donorId');
 
     const notifiedCount = responses.length;
     const acceptedResponses = responses.filter((r) =>
@@ -326,12 +326,13 @@ router.get('/:id', optionalToken, async (req, res) => {
       }
     }
 
-    // Format accepted donors list for requester view (sanitized, privacy-safe, no raw home GPS)
+    // Format accepted donors list for requester view (sanitized, privacy-safe, with contact for urgent coordination)
     const acceptedDonors = acceptedResponses.map((r) => {
       const d = r.donorId || {};
       return {
         donorId: d._id || r.donorId,
         name: d.name || 'Voluntary Donor',
+        phone: d.mobile || emergency.contactNumber || '',
         bloodGroup: d.bloodGroup || emergency.bloodGroup,
         verificationStatus: d.verificationStatus || 'UNVERIFIED',
         journeyStatus: r.status,
@@ -362,6 +363,81 @@ router.get('/:id', optionalToken, async (req, res) => {
       acceptedDonors: isRequester ? acceptedDonors : undefined
     });
   } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// GET /api/emergencies/:id/tracking & GET /api/emergency/:id/tracking
+router.get('/:id/tracking', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid Emergency ID' });
+    }
+
+    const emergency = await EmergencyRequest.findById(id).populate('cityId', 'name stateName location');
+    if (!emergency) {
+      return res.status(404).json({ success: false, message: 'Emergency request not found' });
+    }
+
+    const responses = await EmergencyResponse.find({
+      requestId: emergency._id,
+      status: { $in: ['ACCEPTED', 'TRAVELLING', 'ARRIVED'] }
+    }).populate('donorId', 'name mobile bloodGroup verificationStatus location');
+
+    const hospLat = emergency.hospitalLocation && emergency.hospitalLocation.coordinates ? emergency.hospitalLocation.coordinates[1] : 20.2289;
+    const hospLng = emergency.hospitalLocation && emergency.hospitalLocation.coordinates ? emergency.hospitalLocation.coordinates[0] : 85.7770;
+
+    const donors = responses.map((r, index) => {
+      const d = r.donorId || {};
+      let lat = hospLat + (index === 0 ? 0.025 : (index === 1 ? -0.018 : 0.032));
+      let lng = hospLng + (index === 0 ? -0.022 : (index === 1 ? 0.028 : 0.015));
+      if (d.location && Array.isArray(d.location.coordinates) && d.location.coordinates.length === 2 && d.location.coordinates[0] !== 0) {
+        lng = d.location.coordinates[0];
+        lat = d.location.coordinates[1];
+      }
+
+      // Calculate distance to hospital
+      const R = 6371;
+      const dLat = (hospLat - lat) * Math.PI / 180;
+      const dLon = (hospLng - lng) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat * Math.PI / 180) * Math.cos(hospLat * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const distanceKm = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
+      const etaMinutes = Math.max(4, Math.round((distanceKm / 30.0) * 60));
+
+      return {
+        donorId: d._id ? d._id.toString() : r.donorId.toString(),
+        name: d.name || `Donor ${index + 1}`,
+        phone: d.mobile || emergency.contactNumber || '',
+        bloodGroup: d.bloodGroup || emergency.bloodGroup,
+        journeyStatus: r.status,
+        journeyStatusDisplay: getJourneyStatusDisplay(r.status),
+        latitude: lat,
+        longitude: lng,
+        distanceKm,
+        etaMinutes
+      };
+    });
+
+    const hospCoords = {
+      latitude: hospLat,
+      longitude: hospLng
+    };
+
+    return res.json({
+      success: true,
+      emergencyId: emergency._id,
+      patientName: emergency.patientName,
+      hospital: emergency.hospital,
+      hospitalAddress: emergency.hospitalAddress || '',
+      hospitalLocation: hospCoords,
+      unitsRequired: emergency.unitsRequired || emergency.unitsNeeded || 1,
+      acceptedCount: donors.length,
+      unitsFulfilled: emergency.unitsFulfilled || 0,
+      donors
+    });
+  } catch (err) {
+    console.error('Error fetching emergency tracking:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 });

@@ -619,13 +619,15 @@ public class EmergencyDetailActivity extends AppCompatActivity {
         }
 
         tvNoDonorsYet.setVisibility(View.GONE);
-        for (ApiClient.AcceptedDonorItem d : donors) {
-            View itemView = LayoutInflater.from(this).inflate(R.layout.list_layout, layoutAcceptedDonorsList, false);
+        for (final ApiClient.AcceptedDonorItem d : donors) {
+            View itemView = LayoutInflater.from(this).inflate(R.layout.item_accepted_donor_card, layoutAcceptedDonorsList, false);
 
-            TextView tvAvatar = itemView.findViewById(R.id.tv_blood_badge);
-            TextView tvName = itemView.findViewById(R.id.name_text);
-            TextView tvCity = itemView.findViewById(R.id.tv_donor_city);
-            ImageView ivBadge = itemView.findViewById(R.id.iv_donor_verified_badge);
+            TextView tvAvatar = itemView.findViewById(R.id.tv_donor_card_bg);
+            TextView tvName = itemView.findViewById(R.id.tv_donor_card_name);
+            TextView tvStatus = itemView.findViewById(R.id.tv_donor_card_status);
+            ImageView ivBadge = itemView.findViewById(R.id.iv_donor_card_verified);
+            MaterialButton btnCall = itemView.findViewById(R.id.btn_donor_card_call);
+            MaterialButton btnChat = itemView.findViewById(R.id.btn_donor_card_chat);
 
             if (tvAvatar != null) {
                 tvAvatar.setText(d.bloodGroup != null ? d.bloodGroup : "🩸");
@@ -635,31 +637,56 @@ public class EmergencyDetailActivity extends AppCompatActivity {
             }
 
             // Format Journey Status badge
-            String statusBadge = "Accepted";
+            String statusBadge = "Accepted SOS (Departing Soon)";
             int badgeColor = ContextCompat.getColor(this, R.color.status_available);
             if ("TRAVELLING".equalsIgnoreCase(d.journeyStatus)) {
-                statusBadge = "Travelling to Hospital";
+                statusBadge = "En Route to Hospital";
                 badgeColor = ContextCompat.getColor(this, R.color.colorPrimary);
             } else if ("ARRIVED".equalsIgnoreCase(d.journeyStatus)) {
-                statusBadge = "Arrived at Hospital";
-                badgeColor = Color.parseColor("#388E3C");
+                statusBadge = "At Blood Bank Counter (Arrived)";
+                badgeColor = Color.parseColor("#2E7D32");
             } else if ("DONATED".equalsIgnoreCase(d.journeyStatus) || "COMPLETED".equalsIgnoreCase(d.journeyStatus)) {
-                statusBadge = "Donated (Verified)";
+                statusBadge = "Donation Verified & Certified ✓";
                 badgeColor = Color.parseColor("#1565C0");
             }
 
-            if (tvCity != null) {
-                tvCity.setText(statusBadge);
-                tvCity.setTextColor(badgeColor);
-            }
-
-            if (tvDistance != null) {
-                tvDistance.setVisibility(View.GONE); // No raw donor GPS exposed
+            if (tvStatus != null) {
+                tvStatus.setText(statusBadge);
+                tvStatus.setTextColor(badgeColor);
             }
 
             if (ivBadge != null) {
                 boolean isVerified = "DONOR_VERIFIED".equalsIgnoreCase(d.verificationStatus) || "PHONE_VERIFIED".equalsIgnoreCase(d.verificationStatus);
                 ivBadge.setVisibility(isVerified ? View.VISIBLE : View.GONE);
+            }
+
+            // Individual Call Button
+            if (btnCall != null) {
+                final String phoneToDial = (d.phone != null && !d.phone.isEmpty()) ? d.phone : coordinatorPhone;
+                if (phoneToDial != null && !phoneToDial.isEmpty()) {
+                    btnCall.setVisibility(View.VISIBLE);
+                    btnCall.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + phoneToDial.trim()));
+                            startActivity(intent);
+                        }
+                    });
+                } else {
+                    btnCall.setVisibility(View.GONE);
+                }
+            }
+
+            // Quick Chat Button
+            if (btnChat != null) {
+                btnChat.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent chatIntent = new Intent(EmergencyDetailActivity.this, EmergencyChatActivity.class);
+                        chatIntent.putExtra("emergency_id", emergencyId);
+                        startActivity(chatIntent);
+                    }
+                });
             }
 
             layoutAcceptedDonorsList.addView(itemView);

@@ -722,12 +722,39 @@ public class ApiClient {
     public static class AcceptedDonorItem {
         public String donorId;
         public String name;
+        public String phone;
         public String bloodGroup;
         public String verificationStatus;
         public String journeyStatus;
         public String acceptedAt;
         public String travellingAt;
         public String arrivedAt;
+    }
+
+    public static class DonorTrackInfo {
+        public String donorId;
+        public String name;
+        public String phone;
+        public String bloodGroup;
+        public String journeyStatus;
+        public String journeyStatusDisplay;
+        public double latitude;
+        public double longitude;
+        public double distanceKm;
+        public int etaMinutes;
+    }
+
+    public static class EmergencyTrackingResponse {
+        public String emergencyId;
+        public String patientName;
+        public String hospital;
+        public String hospitalAddress;
+        public double hospitalLat;
+        public double hospitalLng;
+        public int unitsRequired;
+        public int acceptedCount;
+        public int unitsFulfilled;
+        public List<DonorTrackInfo> donors = new ArrayList<>();
     }
 
     public static class EmergencyDetailResponse {
@@ -825,6 +852,7 @@ public class ApiClient {
                                 AcceptedDonorItem item = new AcceptedDonorItem();
                                 item.donorId = optString(dObj, "donorId", "");
                                 item.name = optString(dObj, "name", "Voluntary Donor");
+                                item.phone = optString(dObj, "phone", "");
                                 item.bloodGroup = optString(dObj, "bloodGroup", req.getBloodGroup());
                                 item.verificationStatus = optString(dObj, "verificationStatus", "UNVERIFIED");
                                 item.journeyStatus = optString(dObj, "journeyStatus", "ACCEPTED");
@@ -841,6 +869,59 @@ public class ApiClient {
                     }
                 } catch (Exception e) {
                     callback.onError("Failed to parse emergency details: " + e.getMessage());
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                callback.onError(error);
+            }
+        });
+    }
+
+    public void getEmergencyTracking(String emergencyId, final ApiCallback<EmergencyTrackingResponse> callback) {
+        get("/emergency/" + emergencyId + "/tracking", new InternalCallback() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                try {
+                    EmergencyTrackingResponse res = new EmergencyTrackingResponse();
+                    res.emergencyId = optString(body, "emergencyId", emergencyId);
+                    res.patientName = optString(body, "patientName", "Patient");
+                    res.hospital = optString(body, "hospital", "Hospital");
+                    res.hospitalAddress = optString(body, "hospitalAddress", "");
+                    res.unitsRequired = optInt(body, "unitsRequired", 1);
+                    res.acceptedCount = optInt(body, "acceptedCount", 0);
+                    res.unitsFulfilled = optInt(body, "unitsFulfilled", 0);
+
+                    if (body.has("hospitalLocation") && body.get("hospitalLocation").isJsonObject()) {
+                        JsonObject hl = body.getAsJsonObject("hospitalLocation");
+                        res.hospitalLat = optDouble(hl, "latitude", 20.2289);
+                        res.hospitalLng = optDouble(hl, "longitude", 85.7770);
+                    }
+
+                    if (body.has("donors") && body.get("donors").isJsonArray()) {
+                        JsonArray dArr = body.getAsJsonArray("donors");
+                        for (JsonElement el : dArr) {
+                            if (!el.isJsonObject()) continue;
+                            JsonObject dObj = el.getAsJsonObject();
+                            DonorTrackInfo dt = new DonorTrackInfo();
+                            dt.donorId = optString(dObj, "donorId", "");
+                            dt.name = optString(dObj, "name", "Donor");
+                            dt.phone = optString(dObj, "phone", "");
+                            dt.bloodGroup = optString(dObj, "bloodGroup", "O+");
+                            dt.journeyStatus = optString(dObj, "journeyStatus", "ACCEPTED");
+                            dt.journeyStatusDisplay = optString(dObj, "journeyStatusDisplay", "On The Way");
+                            dt.latitude = optDouble(dObj, "latitude", 20.2961);
+                            dt.longitude = optDouble(dObj, "longitude", 85.8245);
+                            dt.distanceKm = optDouble(dObj, "distanceKm", 0.0);
+                            dt.etaMinutes = optInt(dObj, "etaMinutes", 10);
+                            res.donors.add(dt);
+                        }
+                    }
+
+                    callback.onSuccess(res);
+                } catch (Exception e) {
+                    callback.onError("Failed to parse tracking: " + e.getMessage());
                 }
             }
 
@@ -1279,6 +1360,17 @@ public class ApiClient {
         if (obj.has(key) && !obj.get(key).isJsonNull()) {
             try {
                 return obj.get(key).getAsInt();
+            } catch (Exception e) {
+                return def;
+            }
+        }
+        return def;
+    }
+
+    private double optDouble(JsonObject obj, String key, double def) {
+        if (obj != null && obj.has(key) && !obj.get(key).isJsonNull()) {
+            try {
+                return obj.get(key).getAsDouble();
             } catch (Exception e) {
                 return def;
             }
