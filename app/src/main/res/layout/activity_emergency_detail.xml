@@ -931,9 +931,48 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="Please proceed to the blood bank desk. An authorized hospital coordinator will certify your donation."
+                            android:text="Please proceed to the blood bank desk. Present your 4-digit code to the coordinator for instant verification."
                             android:textColor="?attr/colorOnSurfaceVariant"
                             android:textSize="12sp" />
+
+                        <!-- 4-Digit Handshake Code Banner -->
+                        <LinearLayout
+                            android:id="@+id/layout_handshake_code_box"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:background="@drawable/bg_segmented_pill_container"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="HOSPITAL COUNTER CODE"
+                                android:textColor="?attr/colorOnSurfaceVariant"
+                                android:textSize="10.5sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tv_detail_handshake_code"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:letterSpacing="0.3"
+                                android:text="8 4 9 2"
+                                android:textColor="@color/colorPrimary"
+                                android:textSize="24sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Show this 4-digit code to the blood bank coordinator"
+                                android:textColor="?attr/colorOnSurfaceVariant"
+                                android:textSize="11sp" />
+                        </LinearLayout>
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_call_coordinator"
@@ -946,6 +985,21 @@
                             android:visibility="gone"
                             app:cornerRadius="10dp" />
                     </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_detail_share_certificate"
+                        style="@style/Widget.LifeShare.Button.Primary"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="12dp"
+                        android:text="Share Verified Certificate"
+                        android:textSize="13sp"
+                        android:visibility="gone"
+                        app:cornerRadius="12dp"
+                        app:icon="@drawable/ic_share"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp"
+                        app:iconSize="18dp" />
 
                     <TextView
                         android:id="@+id/tv_donor_feedback"

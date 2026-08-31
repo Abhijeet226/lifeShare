@@ -717,6 +717,7 @@ public class ApiClient {
         public boolean canMarkArrived;
         public boolean isPendingVerification;
         public boolean isCompleted;
+        public String handshakeCode;
     }
 
     public static class AcceptedDonorItem {
@@ -729,6 +730,7 @@ public class ApiClient {
         public String acceptedAt;
         public String travellingAt;
         public String arrivedAt;
+        public String handshakeCode;
     }
 
     public static class DonorTrackInfo {
@@ -841,6 +843,7 @@ public class ApiClient {
                             journey.canMarkArrived = mj.has("canMarkArrived") && mj.get("canMarkArrived").getAsBoolean();
                             journey.isPendingVerification = mj.has("isPendingVerification") && mj.get("isPendingVerification").getAsBoolean();
                             journey.isCompleted = mj.has("isCompleted") && mj.get("isCompleted").getAsBoolean();
+                            journey.handshakeCode = optString(mj, "handshakeCode", "");
                             detail.myJourney = journey;
                         }
 
@@ -859,6 +862,7 @@ public class ApiClient {
                                 item.acceptedAt = optString(dObj, "acceptedAt", null);
                                 item.travellingAt = optString(dObj, "travellingAt", null);
                                 item.arrivedAt = optString(dObj, "arrivedAt", null);
+                                item.handshakeCode = optString(dObj, "handshakeCode", "");
                                 detail.acceptedDonors.add(item);
                             }
                         }
@@ -1244,12 +1248,14 @@ public class ApiClient {
         });
     }
 
-    public void verifyDonation(String emergencyId, String donorId, String doctorName, String doctorRegNo, int units, final ApiCallback<JsonObject> callback) {
+    public void verifyDonation(String emergencyId, String donorId, String doctorName, String doctorRegNo, int units, String handshakeCode, boolean isOverride, final ApiCallback<JsonObject> callback) {
         JsonObject json = new JsonObject();
         json.addProperty("donorId", donorId);
         if (doctorName != null && !doctorName.isEmpty()) json.addProperty("doctorName", doctorName);
         if (doctorRegNo != null && !doctorRegNo.isEmpty()) json.addProperty("doctorRegistrationNo", doctorRegNo);
         json.addProperty("unitsDonated", units > 0 ? units : 1);
+        if (handshakeCode != null && !handshakeCode.trim().isEmpty()) json.addProperty("handshakeCode", handshakeCode.trim());
+        if (isOverride) json.addProperty("isOverride", true);
 
         post("/emergencies/" + emergencyId + "/verify-donation", json.toString(), new InternalCallback() {
             @Override
@@ -1264,8 +1270,12 @@ public class ApiClient {
         });
     }
 
+    public void verifyDonation(String emergencyId, String donorId, String doctorName, String doctorRegNo, int units, final ApiCallback<JsonObject> callback) {
+        verifyDonation(emergencyId, donorId, doctorName, doctorRegNo, units, null, false, callback);
+    }
+
     public void verifyDonation(String emergencyId, String donorId, final ApiCallback<JsonObject> callback) {
-        verifyDonation(emergencyId, donorId, "Attending Medical Officer", "", 1, callback);
+        verifyDonation(emergencyId, donorId, "Attending Medical Officer", "", 1, null, false, callback);
     }
 
     public void getCoordinatorPendingVerifications(final ApiCallback<List<PendingVerificationItem>> callback) {
@@ -1291,6 +1301,7 @@ public class ApiClient {
                         item.donorMobile = optString(obj, "donorMobile", "");
                         item.donorBloodGroup = optString(obj, "donorBloodGroup", "O+");
                         item.donorVerificationStatus = optString(obj, "donorVerificationStatus", "UNVERIFIED");
+                        item.handshakeCode = optString(obj, "handshakeCode", "");
                         item.arrivedAt = optString(obj, "arrivedAt", "");
                         item.createdAt = optString(obj, "createdAt", "");
                         item.status = optString(obj, "status", "ARRIVED");
@@ -1581,6 +1592,7 @@ public class ApiClient {
         public String donorMobile;
         public String donorBloodGroup;
         public String donorVerificationStatus;
+        public String handshakeCode;
         public String arrivedAt;
         public String createdAt;
         public String status;

@@ -21,21 +21,24 @@ import com.google.android.material.button.MaterialButton;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class EmergencyChatActivity extends AppCompatActivity {
 
     private String emergencyId = "";
-    private TextView tvPatientName, tvHospitalName, tvBloodBadge, tvDistanceEta, tvDestinationAddress, tvEmpty;
+    private TextView tvPatientName, tvHospitalName, tvBloodBadge, tvDistanceEta, tvDestinationAddress, tvFleetTransitSummary, tvEmpty;
     private View btnBack, cardNavigation;
     private MaterialButton btnNavigateMaps, btnSend;
-    private MaterialButton chipOnWay, chipEta10m, chipEta20m, chipReachedGate, chipAtDesk;
+    private MaterialButton chipOnWay, chipInTraffic, chipReachedGate, chipAtDesk, chipDonationStarted;
     private EditText etInput;
     private ProgressBar pbLoading;
     private RecyclerView recyclerMessages;
 
     private ChatAdapter chatAdapter;
     private final List<ChatMessage> messageList = new ArrayList<>();
+    private final List<ChatMessage> pendingOfflineQueue = new ArrayList<>();
     private final Handler pollHandler = new Handler(Looper.getMainLooper());
     private boolean isPollingActive = false;
 
@@ -48,6 +51,7 @@ public class EmergencyChatActivity extends AppCompatActivity {
         public void run() {
             if (isPollingActive) {
                 fetchMessagesSilently();
+                fetchFleetTrackingSilently();
                 pollHandler.postDelayed(this, 3500); // 3.5 seconds polling interval
             }
         }
@@ -81,14 +85,15 @@ public class EmergencyChatActivity extends AppCompatActivity {
         tvBloodBadge = findViewById(R.id.tv_chat_blood_badge);
         tvDistanceEta = findViewById(R.id.tv_chat_distance_eta);
         tvDestinationAddress = findViewById(R.id.tv_chat_destination_address);
+        tvFleetTransitSummary = findViewById(R.id.tv_chat_fleet_transit_summary);
         cardNavigation = findViewById(R.id.card_chat_navigation);
         btnNavigateMaps = findViewById(R.id.btn_chat_navigate_maps);
 
         chipOnWay = findViewById(R.id.chip_action_on_way);
-        chipEta10m = findViewById(R.id.chip_action_eta_10m);
-        chipEta20m = findViewById(R.id.chip_action_eta_20m);
+        chipInTraffic = findViewById(R.id.chip_action_in_traffic);
         chipReachedGate = findViewById(R.id.chip_action_reached_gate);
         chipAtDesk = findViewById(R.id.chip_action_at_desk);
+        chipDonationStarted = findViewById(R.id.chip_action_donation_started);
 
         etInput = findViewById(R.id.et_chat_input);
         btnSend = findViewById(R.id.btn_chat_send);
@@ -140,41 +145,51 @@ public class EmergencyChatActivity extends AppCompatActivity {
             });
         }
 
-        // Quick Action Status Chips
-        chipOnWay.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sendQuickStatus("On my way to the hospital", "ETA_UPDATE", null);
-            }
-        });
+        // Quick Action Milestone Chips
+        if (chipOnWay != null) {
+            chipOnWay.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    sendQuickStatus("🚗 On my way to the hospital", "MILESTONE", null);
+                }
+            });
+        }
 
-        chipEta10m.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sendQuickEta(10);
-            }
-        });
+        if (chipInTraffic != null) {
+            chipInTraffic.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    sendQuickStatus("🚦 Delayed in heavy traffic, still travelling", "MILESTONE", null);
+                }
+            });
+        }
 
-        chipEta20m.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sendQuickEta(20);
-            }
-        });
+        if (chipReachedGate != null) {
+            chipReachedGate.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    sendQuickStatus("🏥 Reached Hospital Main Gate", "MILESTONE", null);
+                }
+            });
+        }
 
-        chipReachedGate.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sendQuickStatus("Reached Hospital Main Gate", "STATUS_CHANGE", null);
-            }
-        });
+        if (chipAtDesk != null) {
+            chipAtDesk.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    sendQuickStatus("📍 Present at Blood Bank Verification Desk", "MILESTONE", null);
+                }
+            });
+        }
 
-        chipAtDesk.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sendQuickStatus("Present at Blood Bank Verification Desk", "STATUS_CHANGE", null);
-            }
-        });
+        if (chipDonationStarted != null) {
+            chipDonationStarted.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    sendQuickStatus("🩸 Blood donation procedure started", "MILESTONE", null);
+                }
+            });
+        }
     }
 
     private void launchMapsNavigation() {
@@ -219,6 +234,8 @@ public class EmergencyChatActivity extends AppCompatActivity {
                     }
                 }
                 updateEmptyState();
+                flushPendingOfflineMessages();
+                fetchFleetTrackingSilently();
             }
 
             @Override
@@ -247,11 +264,80 @@ public class EmergencyChatActivity extends AppCompatActivity {
                     scrollToBottom();
                     updateEmptyState();
                 }
+                flushPendingOfflineMessages();
             }
 
             @Override
             public void onError(String errorMessage) {}
         });
+    }
+
+    private void fetchFleetTrackingSilently() {
+        ApiClient.getInstance().getEmergencyTracking(emergencyId, new ApiClient.ApiCallback<ApiClient.EmergencyTrackingResponse>() {
+            @Override
+            public void onSuccess(ApiClient.EmergencyTrackingResponse tracking) {
+                if (isFinishing() || isDestroyed() || tracking == null) return;
+                updateMultiDonorFleetBanner(tracking);
+            }
+
+            @Override
+            public void onError(String errorMessage) {}
+        });
+    }
+
+    private void updateMultiDonorFleetBanner(ApiClient.EmergencyTrackingResponse tracking) {
+        if (tvFleetTransitSummary == null) return;
+
+        List<ApiClient.DonorTrackInfo> activeEnRoute = new ArrayList<>();
+        if (tracking.donors != null) {
+            for (ApiClient.DonorTrackInfo d : tracking.donors) {
+                if ("TRAVELLING".equalsIgnoreCase(d.journeyStatus) || "ACCEPTED".equalsIgnoreCase(d.journeyStatus)) {
+                    activeEnRoute.add(d);
+                }
+            }
+        }
+
+        if (activeEnRoute.isEmpty()) {
+            tvFleetTransitSummary.setVisibility(View.GONE);
+            return;
+        }
+
+        // Sort by shortest ETA ascending
+        Collections.sort(activeEnRoute, new Comparator<ApiClient.DonorTrackInfo>() {
+            @Override
+            public int compare(ApiClient.DonorTrackInfo o1, ApiClient.DonorTrackInfo o2) {
+                return Integer.compare(o1.etaMinutes, o2.etaMinutes);
+            }
+        });
+
+        StringBuilder sb = new StringBuilder();
+        if (activeEnRoute.size() == 1) {
+            ApiClient.DonorTrackInfo d = activeEnRoute.get(0);
+            String name = d.name != null ? d.name.split(" ")[0] : "Donor";
+            sb.append("🚗 Transit: ").append(name).append(" (").append(d.bloodGroup != null ? d.bloodGroup : "O+").append(")");
+            if (d.etaMinutes > 0) {
+                sb.append(" ~").append(d.etaMinutes).append("m away");
+            }
+            if (d.distanceKm > 0) {
+                sb.append(" (").append(String.format("%.1f km", d.distanceKm)).append(")");
+            }
+        } else {
+            sb.append("🚗 Fleet (").append(activeEnRoute.size()).append(" En Route): ");
+            for (int i = 0; i < activeEnRoute.size(); i++) {
+                ApiClient.DonorTrackInfo d = activeEnRoute.get(i);
+                String name = d.name != null ? d.name.split(" ")[0] : "Donor";
+                sb.append(name).append(" (").append(d.bloodGroup != null ? d.bloodGroup : "O+").append(")");
+                if (d.etaMinutes > 0) {
+                    sb.append(" ~").append(d.etaMinutes).append("m");
+                }
+                if (i < activeEnRoute.size() - 1) {
+                    sb.append(" • ");
+                }
+            }
+        }
+
+        tvFleetTransitSummary.setText(sb.toString());
+        tvFleetTransitSummary.setVisibility(View.VISIBLE);
     }
 
     private void bindEmergencyHeader(JsonObject em) {
@@ -278,10 +364,10 @@ public class EmergencyChatActivity extends AppCompatActivity {
             }
             if (btnSend != null) btnSend.setEnabled(false);
             if (chipOnWay != null) chipOnWay.setEnabled(false);
-            if (chipEta10m != null) chipEta10m.setEnabled(false);
-            if (chipEta20m != null) chipEta20m.setEnabled(false);
+            if (chipInTraffic != null) chipInTraffic.setEnabled(false);
             if (chipReachedGate != null) chipReachedGate.setEnabled(false);
             if (chipAtDesk != null) chipAtDesk.setEnabled(false);
+            if (chipDonationStarted != null) chipDonationStarted.setEnabled(false);
         }
 
         if (em.has("hospitalCoordinates") && em.get("hospitalCoordinates").isJsonObject()) {
@@ -328,31 +414,8 @@ public class EmergencyChatActivity extends AppCompatActivity {
 
             @Override
             public void onError(String errorMessage) {
-                Toast.makeText(EmergencyChatActivity.this, "Message delivery failed: " + errorMessage, Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    private void sendQuickEta(final int etaMins) {
-        double[] userLoc = DataManager.getInstance(this).getLastKnownLocation();
-        Double lat = userLoc != null ? userLoc[0] : null;
-        Double lng = userLoc != null ? userLoc[1] : null;
-
-        ApiClient.getInstance().sendChatEta(emergencyId, etaMins, lat, lng, null, new ApiClient.ApiCallback<ChatMessage>() {
-            @Override
-            public void onSuccess(ChatMessage result) {
-                if (result != null) {
-                    messageList.add(result);
-                    chatAdapter.notifyItemInserted(messageList.size() - 1);
-                    scrollToBottom();
-                    updateEmptyState();
-                }
-                Toast.makeText(EmergencyChatActivity.this, "ETA updated: ~" + etaMins + " mins", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onError(String errorMessage) {
-                Toast.makeText(EmergencyChatActivity.this, "Failed to send ETA: " + errorMessage, Toast.LENGTH_SHORT).show();
+                pendingOfflineQueue.add(localMsg);
+                Toast.makeText(EmergencyChatActivity.this, "Network offline: Message queued for auto-resend", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -362,22 +425,58 @@ public class EmergencyChatActivity extends AppCompatActivity {
         Double lat = userLoc != null ? userLoc[0] : null;
         Double lng = userLoc != null ? userLoc[1] : null;
 
+        final ChatMessage localMsg = new ChatMessage(statusText, messageType != null ? messageType : "MILESTONE", true);
+        messageList.add(localMsg);
+        chatAdapter.notifyItemInserted(messageList.size() - 1);
+        scrollToBottom();
+        updateEmptyState();
+
         ApiClient.getInstance().sendChatEta(emergencyId, etaMins, lat, lng, statusText, new ApiClient.ApiCallback<ChatMessage>() {
             @Override
             public void onSuccess(ChatMessage result) {
                 if (result != null) {
-                    messageList.add(result);
-                    chatAdapter.notifyItemInserted(messageList.size() - 1);
-                    scrollToBottom();
-                    updateEmptyState();
+                    int idx = messageList.indexOf(localMsg);
+                    if (idx != -1) {
+                        messageList.set(idx, result);
+                        chatAdapter.notifyItemChanged(idx);
+                    }
                 }
             }
 
             @Override
             public void onError(String errorMessage) {
-                Toast.makeText(EmergencyChatActivity.this, "Status update failed: " + errorMessage, Toast.LENGTH_SHORT).show();
+                pendingOfflineQueue.add(localMsg);
+                Toast.makeText(EmergencyChatActivity.this, "Network offline: Milestone queued for auto-resend", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void flushPendingOfflineMessages() {
+        if (pendingOfflineQueue.isEmpty()) return;
+
+        List<ChatMessage> queueCopy = new ArrayList<>(pendingOfflineQueue);
+        pendingOfflineQueue.clear();
+
+        for (final ChatMessage msg : queueCopy) {
+            String text = msg.getMessageText();
+            String type = msg.getMessageType() != null ? msg.getMessageType() : "TEXT";
+
+            ApiClient.getInstance().sendChatMessage(emergencyId, text, type, new ApiClient.ApiCallback<ChatMessage>() {
+                @Override
+                public void onSuccess(ChatMessage result) {
+                    int idx = messageList.indexOf(msg);
+                    if (idx != -1 && result != null) {
+                        messageList.set(idx, result);
+                        chatAdapter.notifyItemChanged(idx);
+                    }
+                }
+
+                @Override
+                public void onError(String errorMessage) {
+                    pendingOfflineQueue.add(msg); // re-queue on failure
+                }
+            });
+        }
     }
 
     private void scrollToBottom() {

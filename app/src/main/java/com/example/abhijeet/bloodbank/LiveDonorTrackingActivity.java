@@ -79,7 +79,23 @@ public class LiveDonorTrackingActivity extends AppCompatActivity {
         public void run() {
             if (isPolling) {
                 refreshLiveCoordinates();
-                pollHandler.postDelayed(this, 4000);
+
+                // Adaptive Battery-Optimized Geofenced Polling Interval:
+                // > 2.0 km -> 10,000 ms (Energy-saving transit mode)
+                // 1.0 km - 2.0 km -> 5,000 ms (Standard transit mode)
+                // <= 1.0 km -> 3,000 ms (High-precision arrival mode)
+                long nextInterval = 4000L;
+                if (hospLat != 0.0 && hospLng != 0.0 && donorLat != 0.0 && donorLng != 0.0) {
+                    double distKm = LocationHelper.calculateDistanceKm(donorLat, donorLng, hospLat, hospLng);
+                    if (distKm > 2.0) {
+                        nextInterval = 10000L;
+                    } else if (distKm > 1.0) {
+                        nextInterval = 5000L;
+                    } else {
+                        nextInterval = 3000L;
+                    }
+                }
+                pollHandler.postDelayed(this, nextInterval);
             }
         }
     };

@@ -40,7 +40,9 @@ public class EmergencyDetailActivity extends AppCompatActivity {
     private TextView tvStepTimeNotified, tvStepTimeAccepted, tvStepTimeTravelling, tvStepTimeArrived, tvStepTimeVerified;
 
     private View layoutResponseButtons, layoutJourneyActions, layoutVerificationPending;
-    private MaterialButton btnAccept, btnDecline, btnStartJourney, btnMarkArrived, btnCallCoordinator;
+    private View layoutHandshakeCodeBox;
+    private TextView tvDetailHandshakeCode;
+    private MaterialButton btnAccept, btnDecline, btnStartJourney, btnMarkArrived, btnCallCoordinator, btnShareCertificate;
     private TextView tvDonorFeedback;
 
     // Requester View Components
@@ -53,6 +55,7 @@ public class EmergencyDetailActivity extends AppCompatActivity {
     private View layoutDetailSkeleton, layoutDetailContent;
 
     private EmergencyRequest currentEmergency = null;
+    private ApiClient.DonorJourneyInfo currentJourney = null;
     private String coordinatorPhone = "";
     private boolean isRequester = false;
 
@@ -73,7 +76,7 @@ public class EmergencyDetailActivity extends AppCompatActivity {
         }
 
         if (getIntent().getData() != null) {
-            android.net.Uri data = getIntent().getData();
+            Uri data = getIntent().getData();
             String queryId = data.getQueryParameter("id");
             if (queryId != null && !queryId.isEmpty()) {
                 emergencyId = queryId;
@@ -155,12 +158,24 @@ public class EmergencyDetailActivity extends AppCompatActivity {
         layoutResponseButtons = findViewById(R.id.layout_response_buttons);
         layoutJourneyActions = findViewById(R.id.layout_journey_actions);
         layoutVerificationPending = findViewById(R.id.layout_verification_pending);
+        layoutHandshakeCodeBox = findViewById(R.id.layout_handshake_code_box);
+        tvDetailHandshakeCode = findViewById(R.id.tv_detail_handshake_code);
         btnAccept = findViewById(R.id.btn_detail_accept);
         btnDecline = findViewById(R.id.btn_detail_decline);
         btnStartJourney = findViewById(R.id.btn_detail_start_journey);
         btnMarkArrived = findViewById(R.id.btn_detail_mark_arrived);
         btnCallCoordinator = findViewById(R.id.btn_call_coordinator);
+        btnShareCertificate = findViewById(R.id.btn_detail_share_certificate);
         tvDonorFeedback = findViewById(R.id.tv_donor_feedback);
+
+        if (btnShareCertificate != null) {
+            btnShareCertificate.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    shareDonationMilestone();
+                }
+            });
+        }
 
         // Requester View
         cardRequesterMetrics = findViewById(R.id.card_requester_metrics);
@@ -397,6 +412,7 @@ public class EmergencyDetailActivity extends AppCompatActivity {
     }
 
     private void bindDonorJourneyTracker(ApiClient.DonorJourneyInfo journey) {
+        currentJourney = journey;
         String journeyStatus = journey != null ? journey.status : "NOTIFIED";
         currentDonorJourneyStatus = journeyStatus;
 
@@ -449,8 +465,8 @@ public class EmergencyDetailActivity extends AppCompatActivity {
 
         } else if ("TRAVELLING".equalsIgnoreCase(journeyStatus)) {
             setStepCompleted(iconStepNotified, tvStepTitleNotified, tvStepTimeNotified, "✓", "Request Received", "Notified");
-            setStepCompleted(iconStepAccepted, tvStepTitleAccepted, tvStepTimeAccepted, "✓", "Emergency Accepted", "Accepted");
-            setStepActive(iconStepTravelling, tvStepTitleTravelling, tvStepTimeTravelling, "→", "Travelling to Hospital", "In transit to destination");
+            setStepCompleted(iconStepAccepted, tvStepTitleAccepted, tvStepTimeAccepted, "✓", "Emergency Accepted", "Completed");
+            setStepActive(iconStepTravelling, tvStepTitleTravelling, tvStepTimeTravelling, "✓", "Travelling to Hospital", "En route");
 
             layoutJourneyActions.setVisibility(View.VISIBLE);
             btnMarkArrived.setVisibility(View.VISIBLE);
@@ -467,6 +483,8 @@ public class EmergencyDetailActivity extends AppCompatActivity {
                 btnTrackLiveRoute.setVisibility(View.VISIBLE);
                 btnTrackLiveRoute.setText("Live In-App GPS Transit");
             }
+            if (btnShareCertificate != null) btnShareCertificate.setVisibility(View.GONE);
+            if (layoutHandshakeCodeBox != null) layoutHandshakeCodeBox.setVisibility(View.GONE);
 
         } else if ("ARRIVED".equalsIgnoreCase(journeyStatus)) {
             setStepCompleted(iconStepNotified, tvStepTitleNotified, tvStepTimeNotified, "✓", "Request Received", "Notified");
@@ -477,6 +495,17 @@ public class EmergencyDetailActivity extends AppCompatActivity {
 
             layoutJourneyActions.setVisibility(View.VISIBLE);
             layoutVerificationPending.setVisibility(View.VISIBLE);
+
+            if (journey != null && journey.handshakeCode != null && !journey.handshakeCode.isEmpty()) {
+                if (layoutHandshakeCodeBox != null) layoutHandshakeCodeBox.setVisibility(View.VISIBLE);
+                if (tvDetailHandshakeCode != null) {
+                    tvDetailHandshakeCode.setText(journey.handshakeCode);
+                }
+            } else {
+                if (layoutHandshakeCodeBox != null) layoutHandshakeCodeBox.setVisibility(View.GONE);
+            }
+
+            if (btnShareCertificate != null) btnShareCertificate.setVisibility(View.GONE);
 
             if (btnOpenChat != null) {
                 btnOpenChat.setEnabled(true);
@@ -498,6 +527,11 @@ public class EmergencyDetailActivity extends AppCompatActivity {
             tvDonorFeedback.setText("Thank you! Your blood donation has been officially verified.");
             tvDonorFeedback.setTextColor(ContextCompat.getColor(this, R.color.status_available));
 
+            if (btnShareCertificate != null) {
+                btnShareCertificate.setVisibility(View.VISIBLE);
+            }
+            if (layoutHandshakeCodeBox != null) layoutHandshakeCodeBox.setVisibility(View.GONE);
+
             if (btnOpenChat != null) {
                 btnOpenChat.setEnabled(true);
                 btnOpenChat.setAlpha(1.0f);
@@ -512,6 +546,9 @@ public class EmergencyDetailActivity extends AppCompatActivity {
             tvDonorFeedback.setText("You have declined this request.");
             tvDonorFeedback.setTextColor(ContextCompat.getColor(this, R.color.text_hint));
 
+            if (btnShareCertificate != null) btnShareCertificate.setVisibility(View.GONE);
+            if (layoutHandshakeCodeBox != null) layoutHandshakeCodeBox.setVisibility(View.GONE);
+
             if (btnOpenChat != null) {
                 btnOpenChat.setEnabled(false);
                 btnOpenChat.setAlpha(0.5f);
@@ -520,6 +557,30 @@ public class EmergencyDetailActivity extends AppCompatActivity {
             if (btnTrackLiveRoute != null) {
                 btnTrackLiveRoute.setVisibility(View.GONE);
             }
+        }
+    }
+
+    private void shareDonationMilestone() {
+        try {
+            String patient = currentEmergency != null && currentEmergency.getPatientName() != null ? currentEmergency.getPatientName() : "Emergency Patient";
+            String hospital = currentEmergency != null && currentEmergency.getHospital() != null ? currentEmergency.getHospital() : "Hospital";
+            String bg = currentEmergency != null && currentEmergency.getBloodGroup() != null ? currentEmergency.getBloodGroup() : "Blood";
+
+            String shareBody = "🩸 LifeShare Voluntary Blood Donor Milestone!\n"
+                    + "I just successfully completed a voluntary blood donation for " + patient + " (" + bg + ") at " + hospital + ".\n\n"
+                    + "Every drop counts. Join the life-saving movement on LifeShare:\n"
+                    + "https://lifeshare-74c2.onrender.com";
+
+            Intent sendIntent = new Intent();
+            sendIntent.setAction(Intent.ACTION_SEND);
+            sendIntent.putExtra(Intent.EXTRA_TEXT, shareBody);
+            sendIntent.putExtra(Intent.EXTRA_SUBJECT, "LifeShare Blood Donor Milestone");
+            sendIntent.setType("text/plain");
+
+            Intent shareIntent = Intent.createChooser(sendIntent, "Share Donation Milestone");
+            startActivity(shareIntent);
+        } catch (Exception e) {
+            Toast.makeText(this, "Could not open share menu: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 

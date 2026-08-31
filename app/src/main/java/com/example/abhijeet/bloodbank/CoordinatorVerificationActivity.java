@@ -618,6 +618,8 @@ public class CoordinatorVerificationActivity extends AppCompatActivity {
         final EditText etDoctorName = dialogView.findViewById(R.id.et_doctor_name);
         final EditText etDoctorRegNo = dialogView.findViewById(R.id.et_doctor_reg_no);
         final EditText etUnits = dialogView.findViewById(R.id.et_units_donated);
+        final EditText etHandshake = dialogView.findViewById(R.id.et_donor_handshake_code);
+        final android.widget.CheckBox cbOverride = dialogView.findViewById(R.id.cb_coordinator_override);
         View btnCancel = dialogView.findViewById(R.id.btn_cancel_verify);
         View btnSubmit = dialogView.findViewById(R.id.btn_confirm_verify_submit);
 
@@ -637,6 +639,8 @@ public class CoordinatorVerificationActivity extends AppCompatActivity {
                 String docName = etDoctorName != null ? etDoctorName.getText().toString().trim() : "";
                 String docReg = etDoctorRegNo != null ? etDoctorRegNo.getText().toString().trim() : "";
                 String unitsStr = etUnits != null ? etUnits.getText().toString().trim() : "1";
+                String handshake = etHandshake != null ? etHandshake.getText().toString().trim() : "";
+                boolean isOverride = cbOverride != null && cbOverride.isChecked();
 
                 if (docName.isEmpty()) {
                     if (etDoctorName != null) etDoctorName.setError("Doctor name required");
@@ -647,20 +651,25 @@ public class CoordinatorVerificationActivity extends AppCompatActivity {
                     return;
                 }
 
+                if (!isOverride && handshake.isEmpty()) {
+                    if (etHandshake != null) etHandshake.setError("4-Digit Handshake Code required from donor");
+                    return;
+                }
+
                 int units = 1;
                 try {
                     units = Integer.parseInt(unitsStr);
                 } catch (Exception ignored) {}
 
                 dialog.dismiss();
-                performVerification(item, docName, docReg, units);
+                performVerification(item, docName, docReg, units, handshake, isOverride);
             });
         }
 
         dialog.show();
     }
 
-    private void performVerification(final ApiClient.PendingVerificationItem item, String doctorName, String doctorRegNo, int units) {
+    private void performVerification(final ApiClient.PendingVerificationItem item, String doctorName, String doctorRegNo, int units, String handshakeCode, boolean isOverride) {
         if (item.requestId == null || item.donorId == null) {
             Toast.makeText(this, "Invalid request or donor identifier", Toast.LENGTH_SHORT).show();
             return;
@@ -668,7 +677,7 @@ public class CoordinatorVerificationActivity extends AppCompatActivity {
 
         if (swipeRefresh != null) swipeRefresh.setRefreshing(true);
 
-        apiClient.verifyDonation(item.requestId, item.donorId, doctorName, doctorRegNo, units, new ApiClient.ApiCallback<JsonObject>() {
+        apiClient.verifyDonation(item.requestId, item.donorId, doctorName, doctorRegNo, units, handshakeCode, isOverride, new ApiClient.ApiCallback<JsonObject>() {
             @Override
             public void onSuccess(JsonObject result) {
                 if (swipeRefresh != null) swipeRefresh.setRefreshing(false);

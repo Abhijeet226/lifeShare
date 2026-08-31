@@ -642,6 +642,9 @@ const handleEmergencyJourneyAction = async (req, res) => {
     if (action === 'ARRIVED') {
       record.status = 'ARRIVED';
       if (!record.arrivedAt) record.arrivedAt = new Date();
+      if (!record.handshakeCode) {
+        record.handshakeCode = String(Math.floor(1000 + Math.random() * 9000));
+      }
       await record.save();
 
       // Notify Assigned Hospital Coordinators
@@ -658,7 +661,7 @@ const handleEmergencyJourneyAction = async (req, res) => {
         for (const coord of coordinators) {
           notificationService.sendToUser(coord._id, {
             title: `🩸 Donor Arrived: ${donor.name || 'Donor'} (${donor.bloodGroup || emergency.bloodGroup})`,
-            body: `${donor.name || 'A donor'} has arrived at ${emergency.hospital} for patient ${emergency.patientName}. Tap to verify donation.`,
+            body: `${donor.name || 'A donor'} has arrived at ${emergency.hospital} for patient ${emergency.patientName}. Handshake Code: [${record.handshakeCode}]`,
             data: {
               notificationType: 'DONOR_ARRIVED',
               requestId: String(emergency._id),
@@ -668,6 +671,7 @@ const handleEmergencyJourneyAction = async (req, res) => {
               bloodGroup: donor.bloodGroup || emergency.bloodGroup,
               patientName: emergency.patientName,
               hospital: emergency.hospital,
+              handshakeCode: record.handshakeCode,
               targetScreen: 'COORDINATOR_VERIFICATION'
             },
             notificationType: 'DONOR_ARRIVED'
@@ -679,13 +683,15 @@ const handleEmergencyJourneyAction = async (req, res) => {
 
       return res.json({
         success: true,
-        message: 'Arrival at hospital confirmed. Awaiting authorized donation verification.',
+        message: 'Arrival at hospital confirmed. Please present your 4-digit verification code to the blood bank desk.',
         responseStatus: record.status,
+        handshakeCode: record.handshakeCode,
         myJourney: {
           status: record.status,
           acceptedAt: record.acceptedAt,
           travellingAt: record.travellingAt,
           arrivedAt: record.arrivedAt,
+          handshakeCode: record.handshakeCode,
           isPendingVerification: true
         }
       });
@@ -789,6 +795,7 @@ router.get('/coordinator/pending-verifications', authenticateToken, async (req, 
       donorMobile: r.donorId ? r.donorId.mobile : '',
       donorBloodGroup: r.donorId ? r.donorId.bloodGroup : 'O+',
       donorVerificationStatus: r.donorId ? r.donorId.verificationStatus : 'UNVERIFIED',
+      handshakeCode: r.handshakeCode || '',
       arrivedAt: r.arrivedAt,
       createdAt: r.createdAt,
       status: r.status // 'ARRIVED' or 'ACCEPTED'
@@ -888,7 +895,7 @@ router.get('/coordinator/history', authenticateToken, async (req, res) => {
 router.post('/:id/verify-donation', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { donorId, doctorName, doctorRegistrationNo, unitsDonated } = req.body;
+    const { donorId, doctorName, doctorRegistrationNo, unitsDonated, handshakeCode, isOverride } = req.body;
 
     if (!donorId || !mongoose.Types.ObjectId.isValid(donorId)) {
       return res.status(400).json({ success: false, message: 'Valid donorId is required for donation verification.' });
@@ -974,6 +981,16 @@ router.post('/:id/verify-donation', authenticateToken, async (req, res) => {
         success: false,
         message: 'No response record found for this donor on the specified emergency.'
       });
+    }
+
+    // Handshake Code Verification (if code is set and override not checked)
+    if (responseRecord.handshakeCode && !isOverride && handshakeCode) {
+      if (responseRecord.handshakeCode.trim() !== String(handshakeCode).trim()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid 4-digit physical handshake code. Please check code with donor or use coordinator override.'
+        });
+      }
     }
 
     // 4. Idempotency Check: If already DONATED

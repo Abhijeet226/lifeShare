@@ -138,6 +138,17 @@
                                 android:singleLine="true"
                                 android:ellipsize="end"
                                 android:text="Sijua, Patrapada, Bhubaneswar" />
+
+                            <TextView
+                                android:id="@+id/tv_chat_fleet_transit_summary"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:textColor="@color/colorPrimary"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:visibility="gone"
+                                android:text="🚗 Fleet: Rahul ~7m (1.8km) • Priya ~14m (4.2km)" />
                         </LinearLayout>
 
                         <com.google.android.material.button.MaterialButton
@@ -157,8 +168,9 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Quick Status / ETA Action Bar -->
+        <!-- Quick Status / Milestone Action Bar -->
         <HorizontalScrollView
+            android:id="@+id/scroll_chat_milestone_chips"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:scrollbars="none"
@@ -186,25 +198,13 @@
                     app:iconSize="12dp" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/chip_action_eta_10m"
+                    android:id="@+id/chip_action_in_traffic"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="wrap_content"
                     android:layout_height="36dp"
                     android:layout_marginEnd="6dp"
                     android:textSize="11sp"
-                    android:text="ETA: 10 mins"
-                    app:cornerRadius="18dp"
-                    app:icon="@drawable/ic_timer_eta"
-                    app:iconSize="12dp" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/chip_action_eta_20m"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:layout_marginEnd="6dp"
-                    android:textSize="11sp"
-                    android:text="ETA: 20 mins"
+                    android:text="In Heavy Traffic"
                     app:cornerRadius="18dp"
                     app:icon="@drawable/ic_timer_eta"
                     app:iconSize="12dp" />
@@ -226,10 +226,22 @@
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="wrap_content"
                     android:layout_height="36dp"
+                    android:layout_marginEnd="6dp"
                     android:textSize="11sp"
                     android:text="At Blood Bank Desk"
                     app:cornerRadius="18dp"
                     app:icon="@drawable/ic_verified_coordinator"
+                    app:iconSize="12dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/chip_action_donation_started"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:textSize="11sp"
+                    android:text="Donation Started"
+                    app:cornerRadius="18dp"
+                    app:icon="@drawable/ic_blood_drop"
                     app:iconSize="12dp" />
             </LinearLayout>
         </HorizontalScrollView>
