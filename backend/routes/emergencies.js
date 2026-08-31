@@ -1129,15 +1129,42 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 
     // Mark as cancelled with audit timestamps
     const cancelledByRole = req.user.role === 'ADMIN' ? 'ADMIN' : 'REQUESTER';
+    const resolutionReason = (req.body && req.body.reason) || 'Requirement fulfilled / Resolved by requester';
+
     emergency.status = 'CANCELLED';
+    emergency.isActive = false;
     emergency.isFulfilled = true;
     if (!emergency.cancelledAt) {
       emergency.cancelledAt = new Date();
     }
     emergency.cancelledBy = req.user.id;
     emergency.cancelledByRole = cancelledByRole;
-    emergency.cancelledReason = (req.body && req.body.reason) || 'Emergency resolved/cancelled by user';
+    emergency.cancelledReason = resolutionReason;
     await emergency.save();
+
+    // Safely release any responding/en-route donors so their availability is immediately restored
+    const activeResponses = await EmergencyResponse.find({
+      $or: [{ requestId: emergency._id }, { emergencyRequestId: emergency._id }],
+      status: { $in: ['ACCEPTED', 'TRAVELLING', 'NOTIFIED'] }
+    });
+
+    for (const resp of activeResponses) {
+      resp.status = 'CANCELLED';
+      resp.cancelledAt = new Date();
+      resp.cancellationReason = `Emergency resolved: ${resolutionReason}`;
+      await resp.save();
+
+      // Restore donor availability immediately with zero penalty
+      await User.findByIdAndUpdate(resp.donorId, { isAvailable: true });
+
+      // Send courteous notification thanking the donor
+      notificationService.sendNotificationToUser(resp.donorId, {
+        notificationType: 'EMERGENCY_RESOLVED',
+        requestId: emergency._id.toString(),
+        title: '✅ Emergency SOS Resolved',
+        body: `The blood requirement for ${emergency.patientName} at ${emergency.hospital} has been fulfilled. Thank you for your willingness to help!`
+      });
+    }
 
     logAuditEvent({
       actorId: req.user.id,
@@ -1147,15 +1174,14 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       entityId: emergency._id,
       metadata: {
         cancelledReason: emergency.cancelledReason,
-        patientName: emergency.patientName
+        patientName: emergency.patientName,
+        releasedDonorsCount: activeResponses.length
       }
     });
 
-    await EmergencyRequest.deleteOne({ _id: emergency._id });
-
     res.json({
       success: true,
-      message: 'Emergency request resolved and removed'
+      message: 'Emergency request resolved successfully. Responding donors have been notified and released.'
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
