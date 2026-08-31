@@ -35,16 +35,15 @@ import java.util.List;
 
 public class LiveDonorTrackingActivity extends AppCompatActivity {
 
-    public static final XYTileSource CARTO_VOYAGER = new XYTileSource(
-            "CartoVoyager",
-            0, 20, 256, ".png",
+    public static final XYTileSource HUMANITARIAN_HOT = new XYTileSource(
+            "HumanitarianHOT",
+            0, 19, 256, ".png",
             new String[]{
-                    "https://a.basemaps.cartocdn.com/rastertiles/voyager/",
-                    "https://b.basemaps.cartocdn.com/rastertiles/voyager/",
-                    "https://c.basemaps.cartocdn.com/rastertiles/voyager/",
-                    "https://d.basemaps.cartocdn.com/rastertiles/voyager/"
+                    "https://a.tile.openstreetmap.fr/hot/",
+                    "https://b.tile.openstreetmap.fr/hot/",
+                    "https://c.tile.openstreetmap.fr/hot/"
             },
-            "© OpenStreetMap contributors © CARTO"
+            "© OpenStreetMap contributors, Humanitarian OpenStreetMap Team"
     );
 
     private String emergencyId = "";
@@ -128,7 +127,7 @@ public class LiveDonorTrackingActivity extends AppCompatActivity {
     }
 
     private void setupMap() {
-        mapView.setTileSource(CARTO_VOYAGER);
+        mapView.setTileSource(HUMANITARIAN_HOT);
         mapView.setMultiTouchControls(true);
         mapView.setTilesScaledToDpi(true);
         mapView.getZoomController().setVisibility(org.osmdroid.views.CustomZoomButtonsController.Visibility.NEVER);
