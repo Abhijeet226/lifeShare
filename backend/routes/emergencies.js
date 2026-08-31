@@ -640,6 +640,38 @@ const handleEmergencyJourneyAction = async (req, res) => {
 
     // 5. Handle ARRIVED
     if (action === 'ARRIVED') {
+      let hospLat = null;
+      let hospLng = null;
+      if (emergency.hospitalLocation && emergency.hospitalLocation.coordinates && emergency.hospitalLocation.coordinates.length >= 2) {
+        hospLng = emergency.hospitalLocation.coordinates[0];
+        hospLat = emergency.hospitalLocation.coordinates[1];
+      }
+
+      if (hospLat != null && hospLng != null && latitude != null && longitude != null) {
+        const donorLatNum = parseFloat(latitude);
+        const donorLngNum = parseFloat(longitude);
+        if (!isNaN(donorLatNum) && !isNaN(donorLngNum)) {
+          const R = 6371e3; // Earth radius in meters
+          const phi1 = (donorLatNum * Math.PI) / 180;
+          const phi2 = (hospLat * Math.PI) / 180;
+          const deltaPhi = ((hospLat - donorLatNum) * Math.PI) / 180;
+          const deltaLambda = ((hospLng - donorLngNum) * Math.PI) / 180;
+          const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+                    Math.cos(phi1) * Math.cos(phi2) *
+                    Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          const distMeters = R * c;
+
+          if (distMeters > 500) {
+            const kmStr = (distMeters / 1000).toFixed(1);
+            return res.status(400).json({
+              success: false,
+              message: `Geofence Lock: You are currently ${kmStr} km away from ${emergency.hospital}. Arrival can only be confirmed within 500m of the hospital perimeter.`
+            });
+          }
+        }
+      }
+
       record.status = 'ARRIVED';
       if (!record.arrivedAt) record.arrivedAt = new Date();
       if (!record.handshakeCode) {

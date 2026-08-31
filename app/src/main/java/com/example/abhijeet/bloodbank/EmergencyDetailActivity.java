@@ -643,7 +643,15 @@ public class EmergencyDetailActivity extends AppCompatActivity {
         btnStartJourney.setEnabled(false);
         btnMarkArrived.setEnabled(false);
 
-        ApiClient.getInstance().updateJourneyStatus(emergencyId, action, new ApiClient.ApiCallback<String>() {
+        Double currentLat = null;
+        Double currentLng = null;
+        double[] lastLoc = DataManager.getInstance(this).getLastKnownLocation();
+        if (lastLoc != null && lastLoc.length >= 2) {
+            currentLat = lastLoc[0];
+            currentLng = lastLoc[1];
+        }
+
+        ApiClient.getInstance().updateJourneyStatus(emergencyId, action, currentLat, currentLng, new ApiClient.ApiCallback<String>() {
             @Override
             public void onSuccess(String message) {
                 btnStartJourney.setEnabled(true);

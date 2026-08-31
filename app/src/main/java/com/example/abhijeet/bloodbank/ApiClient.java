@@ -950,9 +950,11 @@ public class ApiClient {
         });
     }
 
-    public void updateJourneyStatus(String emergencyId, String action, final ApiCallback<String> callback) {
+    public void updateJourneyStatus(String emergencyId, String action, Double latitude, Double longitude, final ApiCallback<String> callback) {
         JsonObject json = new JsonObject();
         json.addProperty("action", action); // "VIEWED", "TRAVELLING", "ARRIVED", "CANCELLED"
+        if (latitude != null) json.addProperty("latitude", latitude);
+        if (longitude != null) json.addProperty("longitude", longitude);
 
         post("/emergencies/" + emergencyId + "/journey", json.toString(), new InternalCallback() {
             @Override
@@ -966,6 +968,10 @@ public class ApiClient {
                 callback.onError(error);
             }
         });
+    }
+
+    public void updateJourneyStatus(String emergencyId, String action, final ApiCallback<String> callback) {
+        updateJourneyStatus(emergencyId, action, null, null, callback);
     }
 
     public void respondToEmergency(String emergencyId, String responseAction, final ApiCallback<String> callback) {
