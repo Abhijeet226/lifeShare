@@ -33,6 +33,7 @@ import com.example.abhijeet.bloodbank.DataManager;
 import com.example.abhijeet.bloodbank.EmergencyDetailActivity;
 import com.example.abhijeet.bloodbank.EmergencyRequest;
 import com.example.abhijeet.bloodbank.LocationHelper;
+import com.example.abhijeet.bloodbank.NotificationCenterActivity;
 import com.example.abhijeet.bloodbank.NotificationHelper;
 import com.example.abhijeet.bloodbank.R;
 import com.example.abhijeet.bloodbank.UserProfile;
@@ -48,6 +49,8 @@ public class EmergencyFragment extends Fragment {
     private View layoutEmpty;
     private MaterialButton btnOpenPostSos;
     private SwipeRefreshLayout swipeRefresh;
+    private android.widget.FrameLayout btnNotifBell;
+    private TextView tvNotifBadge;
 
     private EmergencyAdapter mAdapter;
     private final List<EmergencyRequest> requestList = new ArrayList<>();
@@ -62,6 +65,15 @@ public class EmergencyFragment extends Fragment {
         layoutEmpty = view.findViewById(R.id.layout_emergency_empty);
         btnOpenPostSos = view.findViewById(R.id.btn_open_post_sos);
         swipeRefresh = view.findViewById(R.id.swipe_refresh_emergency);
+        btnNotifBell = view.findViewById(R.id.btn_emergency_notif_bell);
+        tvNotifBadge = view.findViewById(R.id.tv_emergency_notif_badge);
+
+        if (btnNotifBell != null) {
+            btnNotifBell.setOnClickListener(v -> {
+                Intent intent = new Intent(getContext(), NotificationCenterActivity.class);
+                startActivity(intent);
+            });
+        }
 
         if (swipeRefresh != null) {
             swipeRefresh.setColorSchemeResources(R.color.colorPrimary);
@@ -122,6 +134,7 @@ public class EmergencyFragment extends Fragment {
     public void onResume() {
         super.onResume();
         loadRequests();
+        refreshUnreadNotificationBadge();
     }
 
     private void loadRequests() {
@@ -902,5 +915,25 @@ public class EmergencyFragment extends Fragment {
             tvName = itemView.findViewById(R.id.tv_item_city_name);
             tvSubtitle = itemView.findViewById(R.id.tv_item_city_subtitle);
         }
+    }
+
+    private void refreshUnreadNotificationBadge() {
+        ApiClient.getInstance().getNotifications("ALL", 1, new ApiClient.ApiCallback<ApiClient.NotificationListResponse>() {
+            @Override
+            public void onSuccess(ApiClient.NotificationListResponse response) {
+                if (!isAdded() || getContext() == null) return;
+                if (tvNotifBadge != null) {
+                    if (response != null && response.unreadCount > 0) {
+                        tvNotifBadge.setText(response.unreadCount > 99 ? "99+" : String.valueOf(response.unreadCount));
+                        tvNotifBadge.setVisibility(View.VISIBLE);
+                    } else {
+                        tvNotifBadge.setVisibility(View.GONE);
+                    }
+                }
+            }
+
+            @Override
+            public void onError(String errorMessage) {}
+        });
     }
 }

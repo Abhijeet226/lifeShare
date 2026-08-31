@@ -370,9 +370,16 @@ public class NotificationHelper {
         } else if ("COORDINATOR_ONBOARDED".equals(type) || "COORDINATOR_ASSIGNED".equals(type)) {
             intent = new Intent(context, CoordinatorVerificationActivity.class);
             intent.setData(Uri.parse("lifeshare://coordinator"));
-        } else if ("ADMIN_ALERT".equals(type)) {
-            intent = new Intent(context, AdminDashboardActivity.class);
-            intent.setData(Uri.parse("lifeshare://admin"));
+        } else if ("CHAT_MESSAGE".equals(type) || "CHAT_ALERT".equals(type)) {
+            intent = new Intent(context, EmergencyChatActivity.class);
+            if (requestId != null && !requestId.isEmpty()) {
+                intent.putExtra("emergency_id", requestId);
+            }
+            if (extraData != null) {
+                if (extraData.containsKey("patientName")) intent.putExtra("patient_name", extraData.get("patientName"));
+                if (extraData.containsKey("hospitalName")) intent.putExtra("hospital_name", extraData.get("hospitalName"));
+            }
+            intent.setData(Uri.parse("lifeshare://chat" + (requestId != null ? ("?id=" + requestId) : "")));
         } else if (requestId != null && !requestId.isEmpty()) {
             intent = new Intent(context, EmergencyDetailActivity.class);
             intent.putExtra("emergency_id", requestId);
@@ -386,14 +393,26 @@ public class NotificationHelper {
                 context, (int) System.currentTimeMillis(), intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
-        String channelId = ("EMERGENCY_REQUEST".equals(type) || "DONOR_ARRIVED".equals(type)) ? CHANNEL_EMERGENCY_ID : CHANNEL_GENERAL_ID;
+        String channelId = CHANNEL_GENERAL_ID;
+        int priority = NotificationCompat.PRIORITY_DEFAULT;
+
+        if ("EMERGENCY_REQUEST".equals(type) || "DONOR_ACCEPTED".equals(type) || "DONOR_ARRIVED".equals(type) || "EMERGENCY_RESOLVED".equals(type) || "EMERGENCY_CANCELLED".equals(type)) {
+            channelId = CHANNEL_EMERGENCY_ID;
+            priority = NotificationCompat.PRIORITY_MAX;
+        } else if ("CHAT_MESSAGE".equals(type) || "CHAT_ALERT".equals(type)) {
+            channelId = CHANNEL_CHAT_ID;
+            priority = NotificationCompat.PRIORITY_HIGH;
+        } else if ("DONATION_VERIFIED".equals(type) || "CERTIFICATE_ISSUED".equals(type) || "COOLDOWN_EXPIRED".equals(type)) {
+            channelId = CHANNEL_CERTIFICATES_ID;
+            priority = NotificationCompat.PRIORITY_DEFAULT;
+        }
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId)
                 .setSmallIcon(R.drawable.ic_nav_emergency)
                 .setContentTitle(title)
                 .setContentText(message)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
-                .setPriority(("EMERGENCY_REQUEST".equals(type) || "DONOR_ARRIVED".equals(type)) ? NotificationCompat.PRIORITY_MAX : NotificationCompat.PRIORITY_DEFAULT)
+                .setPriority(priority)
                 .setColor(Color.parseColor("#C62828"))
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent)
