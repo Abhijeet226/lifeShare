@@ -34,13 +34,13 @@ sealed class Screen(val route: String) {
     }
 }
 
-sealed class BottomNavTab(val route: String, val title: String) {
-    data object Home : BottomNavTab("tab_home", "Home")
-    data object Emergency : BottomNavTab("tab_emergency", "SOS")
-    data object Search : BottomNavTab("tab_search", "Search")
-    data object Profile : BottomNavTab("tab_profile", "Profile")
+enum class BottomNavTab(val route: String, val title: String) {
+    Home("tab_home", "Home"),
+    Emergency("tab_emergency", "SOS"),
+    Search("tab_search", "Search"),
+    Profile("tab_profile", "Profile");
 
     companion object {
-        val ALL = listOf(Home, Emergency, Search, Profile)
+        val ALL: List<BottomNavTab> get() = entries
     }
 }

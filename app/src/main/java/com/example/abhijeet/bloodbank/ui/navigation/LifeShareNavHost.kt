@@ -68,7 +68,6 @@ fun LifeShareNavHost(
         composable(Screen.MainContainer.route) {
             MainContainerScreen(
                 onNavigateToEmergencyDetail = { id -> navController.navigate(Screen.EmergencyDetail.createRoute(id)) },
-                onNavigateToSOSBroadcast = { navController.navigate(BottomNavTab.Emergency.route) },
                 onNavigateToNotifications = { navController.navigate(Screen.NotificationCenter.route) },
                 onNavigateToHistory = { navController.navigate(Screen.DonationHistory.route) },
                 onNavigateToCoordinator = { navController.navigate(Screen.CoordinatorVerification.route) },
@@ -78,6 +77,7 @@ fun LifeShareNavHost(
                 onLogout = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             )

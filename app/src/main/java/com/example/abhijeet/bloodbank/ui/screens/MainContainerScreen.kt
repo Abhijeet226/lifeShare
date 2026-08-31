@@ -13,7 +13,6 @@ import com.example.abhijeet.bloodbank.ui.navigation.BottomNavTab
 @Composable
 fun MainContainerScreen(
     onNavigateToEmergencyDetail: (String) -> Unit,
-    onNavigateToSOSBroadcast: () -> Unit,
     onNavigateToNotifications: () -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToCoordinator: () -> Unit,
@@ -22,7 +21,7 @@ fun MainContainerScreen(
     onNavigateToAbout: () -> Unit,
     onLogout: () -> Unit
 ) {
-    var selectedTab by remember { mutableStateOf<BottomNavTab>(BottomNavTab.Home) }
+    var selectedTab by remember { mutableStateOf(BottomNavTab.Home) }
 
     Scaffold(
         bottomBar = {
@@ -48,7 +47,7 @@ fun MainContainerScreen(
             when (selectedTab) {
                 BottomNavTab.Home -> HomeScreen(
                     onNavigateToEmergencyDetail = onNavigateToEmergencyDetail,
-                    onNavigateToSOSBroadcast = onNavigateToSOSBroadcast,
+                    onNavigateToSOSBroadcast = { selectedTab = BottomNavTab.Emergency },
                     onNavigateToSearch = { selectedTab = BottomNavTab.Search },
                     onNavigateToNotifications = onNavigateToNotifications,
                     onNavigateToHistory = onNavigateToHistory,
