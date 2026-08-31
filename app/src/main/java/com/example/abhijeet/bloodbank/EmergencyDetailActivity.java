@@ -30,6 +30,8 @@ public class EmergencyDetailActivity extends AppCompatActivity {
     private String emergencyId = "";
     private TextView tvBloodGroup, tvPatient, tvUnits, tvUrgency, tvHospital, tvHospitalAddress, tvDistance, tvStatus;
     private MaterialButton btnNavigateHospital;
+    private MaterialButton btnOpenChat, btnTrackLiveRoute;
+    private String currentDonorJourneyStatus = "NOTIFIED";
 
     // Donor Journey Tracker Components
     private MaterialCardView cardDonorJourney;
@@ -188,11 +190,16 @@ public class EmergencyDetailActivity extends AppCompatActivity {
         });
 
         // Live Coordination Chat button click
-        MaterialButton btnOpenChat = findViewById(R.id.btn_open_emergency_chat);
+        btnOpenChat = findViewById(R.id.btn_open_emergency_chat);
         if (btnOpenChat != null) {
             btnOpenChat.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    if (!isRequester && currentDonorJourneyStatus != null &&
+                            ("NOTIFIED".equalsIgnoreCase(currentDonorJourneyStatus) || "VIEWED".equalsIgnoreCase(currentDonorJourneyStatus) || "DECLINED".equalsIgnoreCase(currentDonorJourneyStatus))) {
+                        Toast.makeText(EmergencyDetailActivity.this, "Please accept the emergency SOS first to unlock live coordination chat.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
                     Intent chatIntent = new Intent(EmergencyDetailActivity.this, EmergencyChatActivity.class);
                     chatIntent.putExtra("emergency_id", emergencyId);
                     startActivity(chatIntent);
@@ -200,7 +207,7 @@ public class EmergencyDetailActivity extends AppCompatActivity {
             });
         }
 
-        MaterialButton btnTrackLiveRoute = findViewById(R.id.btn_track_live_route);
+        btnTrackLiveRoute = findViewById(R.id.btn_track_live_route);
         if (btnTrackLiveRoute != null) {
             btnTrackLiveRoute.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -361,6 +368,25 @@ public class EmergencyDetailActivity extends AppCompatActivity {
             tvStatRemaining.setText(String.valueOf(detail.remainingUnits));
 
             populateAcceptedDonors(detail.acceptedDonors);
+
+            if (btnOpenChat != null) {
+                btnOpenChat.setEnabled(true);
+                btnOpenChat.setAlpha(1.0f);
+                if (detail.acceptedCount > 0) {
+                    btnOpenChat.setText("Live Coordination Chat (" + detail.acceptedCount + " Responding)");
+                } else {
+                    btnOpenChat.setText("Live Coordination Chat (Awaiting Donors)");
+                }
+            }
+
+            if (btnTrackLiveRoute != null) {
+                if (detail.acceptedCount > 0) {
+                    btnTrackLiveRoute.setVisibility(View.VISIBLE);
+                    btnTrackLiveRoute.setText("Track Incoming Donors (" + detail.acceptedCount + " Active)");
+                } else {
+                    btnTrackLiveRoute.setVisibility(View.GONE);
+                }
+            }
         } else {
             // Donor View with Visual Tracker
             cardRequesterMetrics.setVisibility(View.GONE);
@@ -372,6 +398,7 @@ public class EmergencyDetailActivity extends AppCompatActivity {
 
     private void bindDonorJourneyTracker(ApiClient.DonorJourneyInfo journey) {
         String journeyStatus = journey != null ? journey.status : "NOTIFIED";
+        currentDonorJourneyStatus = journeyStatus;
 
         // Reset all steps to inactive defaults
         resetStep(iconStepNotified, tvStepTitleNotified, tvStepTimeNotified, "✓", "Request Received", "Matched with emergency");
@@ -391,6 +418,15 @@ public class EmergencyDetailActivity extends AppCompatActivity {
             setStepActive(iconStepNotified, tvStepTitleNotified, tvStepTimeNotified, "✓", "Request Received", "Tap below to respond");
             layoutResponseButtons.setVisibility(View.VISIBLE);
 
+            if (btnOpenChat != null) {
+                btnOpenChat.setEnabled(false);
+                btnOpenChat.setAlpha(0.5f);
+                btnOpenChat.setText("Live Coordination Chat (Accept SOS to Unlock)");
+            }
+            if (btnTrackLiveRoute != null) {
+                btnTrackLiveRoute.setVisibility(View.GONE);
+            }
+
         } else if ("ACCEPTED".equalsIgnoreCase(journeyStatus)) {
             setStepCompleted(iconStepNotified, tvStepTitleNotified, tvStepTimeNotified, "✓", "Request Received", "Notified");
             setStepActive(iconStepAccepted, tvStepTitleAccepted, tvStepTimeAccepted, "✓", "Emergency Accepted", "Ready to depart");
@@ -400,6 +436,16 @@ public class EmergencyDetailActivity extends AppCompatActivity {
             tvDonorFeedback.setVisibility(View.VISIBLE);
             tvDonorFeedback.setText("You accepted this request. Please tap 'Start Journey' when you leave.");
             tvDonorFeedback.setTextColor(ContextCompat.getColor(this, R.color.status_available));
+
+            if (btnOpenChat != null) {
+                btnOpenChat.setEnabled(true);
+                btnOpenChat.setAlpha(1.0f);
+                btnOpenChat.setText("Live Coordination Chat");
+            }
+            if (btnTrackLiveRoute != null) {
+                btnTrackLiveRoute.setVisibility(View.VISIBLE);
+                btnTrackLiveRoute.setText("Track Route to Hospital");
+            }
 
         } else if ("TRAVELLING".equalsIgnoreCase(journeyStatus)) {
             setStepCompleted(iconStepNotified, tvStepTitleNotified, tvStepTimeNotified, "✓", "Request Received", "Notified");
@@ -412,6 +458,16 @@ public class EmergencyDetailActivity extends AppCompatActivity {
             tvDonorFeedback.setText("Status: In transit. Hospital coordinator expects your arrival.");
             tvDonorFeedback.setTextColor(ContextCompat.getColor(this, R.color.colorPrimary));
 
+            if (btnOpenChat != null) {
+                btnOpenChat.setEnabled(true);
+                btnOpenChat.setAlpha(1.0f);
+                btnOpenChat.setText("Live Coordination Chat");
+            }
+            if (btnTrackLiveRoute != null) {
+                btnTrackLiveRoute.setVisibility(View.VISIBLE);
+                btnTrackLiveRoute.setText("Live In-App GPS Transit");
+            }
+
         } else if ("ARRIVED".equalsIgnoreCase(journeyStatus)) {
             setStepCompleted(iconStepNotified, tvStepTitleNotified, tvStepTimeNotified, "✓", "Request Received", "Notified");
             setStepCompleted(iconStepAccepted, tvStepTitleAccepted, tvStepTimeAccepted, "✓", "Emergency Accepted", "Accepted");
@@ -421,6 +477,15 @@ public class EmergencyDetailActivity extends AppCompatActivity {
 
             layoutJourneyActions.setVisibility(View.VISIBLE);
             layoutVerificationPending.setVisibility(View.VISIBLE);
+
+            if (btnOpenChat != null) {
+                btnOpenChat.setEnabled(true);
+                btnOpenChat.setAlpha(1.0f);
+                btnOpenChat.setText("Live Coordination Chat");
+            }
+            if (btnTrackLiveRoute != null) {
+                btnTrackLiveRoute.setVisibility(View.GONE);
+            }
 
         } else if ("DONATED".equalsIgnoreCase(journeyStatus) || "COMPLETED".equalsIgnoreCase(journeyStatus)) {
             setStepCompleted(iconStepNotified, tvStepTitleNotified, tvStepTimeNotified, "✓", "Request Received", "Completed");
@@ -433,10 +498,28 @@ public class EmergencyDetailActivity extends AppCompatActivity {
             tvDonorFeedback.setText("Thank you! Your blood donation has been officially verified.");
             tvDonorFeedback.setTextColor(ContextCompat.getColor(this, R.color.status_available));
 
+            if (btnOpenChat != null) {
+                btnOpenChat.setEnabled(true);
+                btnOpenChat.setAlpha(1.0f);
+                btnOpenChat.setText("Live Coordination Chat");
+            }
+            if (btnTrackLiveRoute != null) {
+                btnTrackLiveRoute.setVisibility(View.GONE);
+            }
+
         } else if ("DECLINED".equalsIgnoreCase(journeyStatus)) {
             tvDonorFeedback.setVisibility(View.VISIBLE);
             tvDonorFeedback.setText("You have declined this request.");
             tvDonorFeedback.setTextColor(ContextCompat.getColor(this, R.color.text_hint));
+
+            if (btnOpenChat != null) {
+                btnOpenChat.setEnabled(false);
+                btnOpenChat.setAlpha(0.5f);
+                btnOpenChat.setText("Live Coordination Chat (Declined)");
+            }
+            if (btnTrackLiveRoute != null) {
+                btnTrackLiveRoute.setVisibility(View.GONE);
+            }
         }
     }
 

@@ -225,7 +225,11 @@ public class EmergencyChatActivity extends AppCompatActivity {
             public void onError(String errorMessage) {
                 if (isFinishing() || isDestroyed()) return;
                 if (pbLoading != null) pbLoading.setVisibility(View.GONE);
-                Toast.makeText(EmergencyChatActivity.this, "Unable to load chat: " + errorMessage, Toast.LENGTH_SHORT).show();
+                Toast.makeText(EmergencyChatActivity.this, errorMessage != null ? errorMessage : "Unable to load chat", Toast.LENGTH_LONG).show();
+                if (errorMessage != null && errorMessage.toLowerCase().contains("accept")) {
+                    finish();
+                    return;
+                }
                 updateEmptyState();
             }
         });
@@ -255,6 +259,7 @@ public class EmergencyChatActivity extends AppCompatActivity {
         String hospital = em.has("hospital") ? em.get("hospital").getAsString() : "Hospital";
         String bg = em.has("bloodGroup") ? em.get("bloodGroup").getAsString() : "O+";
         String address = em.has("hospitalAddress") ? em.get("hospitalAddress").getAsString() : "";
+        String status = em.has("status") ? em.get("status").getAsString() : "ACTIVE";
 
         destinationHospitalName = hospital;
         tvPatientName.setText(patient);
@@ -264,6 +269,19 @@ public class EmergencyChatActivity extends AppCompatActivity {
             tvDestinationAddress.setText(address);
         } else {
             tvDestinationAddress.setText(hospital);
+        }
+
+        if ("RESOLVED".equalsIgnoreCase(status) || "CANCELLED".equalsIgnoreCase(status) || "FULFILLED".equalsIgnoreCase(status)) {
+            if (etInput != null) {
+                etInput.setEnabled(false);
+                etInput.setHint("Coordination closed (Request " + status.toLowerCase() + ")");
+            }
+            if (btnSend != null) btnSend.setEnabled(false);
+            if (chipOnWay != null) chipOnWay.setEnabled(false);
+            if (chipEta10m != null) chipEta10m.setEnabled(false);
+            if (chipEta20m != null) chipEta20m.setEnabled(false);
+            if (chipReachedGate != null) chipReachedGate.setEnabled(false);
+            if (chipAtDesk != null) chipAtDesk.setEnabled(false);
         }
 
         if (em.has("hospitalCoordinates") && em.get("hospitalCoordinates").isJsonObject()) {

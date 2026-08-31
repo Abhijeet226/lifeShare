@@ -86,7 +86,13 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         }
 
         // Action Buttons
-        if ("CHAT".equalsIgnoreCase(item.getChannel()) || (item.getChatRoomId() != null && !item.getChatRoomId().isEmpty())) {
+        if ("CHAT".equalsIgnoreCase(item.getChannel())) {
+            holder.btnChat.setVisibility(View.VISIBLE);
+            holder.btnChat.setOnClickListener(v -> {
+                if (listener != null) listener.onOpenChat(item);
+            });
+        } else if ("EMERGENCY".equalsIgnoreCase(item.getChannel()) &&
+                ("ACCEPTED".equalsIgnoreCase(item.getStatus()) || "TRAVELLING".equalsIgnoreCase(item.getStatus()) || "ARRIVED".equalsIgnoreCase(item.getStatus()))) {
             holder.btnChat.setVisibility(View.VISIBLE);
             holder.btnChat.setOnClickListener(v -> {
                 if (listener != null) listener.onOpenChat(item);

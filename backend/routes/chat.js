@@ -41,7 +41,7 @@ async function authorizeChatParticipant(emergency, userId, userRole) {
     requestId: emergency._id,
     donorId: userId
   }).lean();
-  if (donorResponse) {
+  if (donorResponse && ['ACCEPTED', 'TRAVELLING', 'ARRIVED', 'DONATED', 'COMPLETED'].includes(donorResponse.status)) {
     return 'DONOR';
   }
 
@@ -50,11 +50,6 @@ async function authorizeChatParticipant(emergency, userId, userRole) {
     if (emergency.hospitalId.toString() === user.hospitalId.toString()) {
       return 'COORDINATOR';
     }
-  }
-
-  // Allow registered donors to participate in active emergency coordination
-  if (user && user.role === 'DONOR') {
-    return 'DONOR';
   }
 
   return false;
@@ -67,6 +62,14 @@ router.get('/:emergencyId/messages', authenticateToken, async (req, res) => {
     const emergency = await EmergencyRequest.findById(emergencyId).lean();
     if (!emergency) {
       return res.status(404).json({ success: false, message: 'Emergency request not found' });
+    }
+
+    const authRole = await authorizeChatParticipant(emergency, req.user.id, req.user.role);
+    if (!authRole) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access restricted. You must accept this emergency SOS before accessing the coordination chat.'
+      });
     }
 
     const messages = await ChatMessage.find({ emergencyRequestId: emergencyId })
@@ -126,12 +129,27 @@ router.post('/:emergencyId/messages', authenticateToken, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Emergency request not found' });
     }
 
+    if (['RESOLVED', 'CANCELLED', 'FULFILLED'].includes(emergency.status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'This emergency coordination chat is closed as the request is now resolved or cancelled.'
+      });
+    }
+
+    const authRole = await authorizeChatParticipant(emergency, req.user.id, req.user.role);
+    if (!authRole) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access restricted. You must accept this emergency SOS before sending chat messages.'
+      });
+    }
+
     const sender = await User.findById(req.user.id).lean();
     if (!sender) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const senderRole = sender.role || 'DONOR';
+    const senderRole = authRole || sender.role || 'DONOR';
     const senderName = sender.name || `${sender.firstName || ''} ${sender.lastName || ''}`.trim() || 'Volunteer';
 
     const newMsg = await ChatMessage.create({
