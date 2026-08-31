@@ -23,6 +23,7 @@ import com.google.gson.JsonObject;
 
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
@@ -33,6 +34,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LiveDonorTrackingActivity extends AppCompatActivity {
+
+    public static final XYTileSource CARTO_VOYAGER = new XYTileSource(
+            "CartoVoyager",
+            0, 20, 256, ".png",
+            new String[]{
+                    "https://a.basemaps.cartocdn.com/rastertiles/voyager/",
+                    "https://b.basemaps.cartocdn.com/rastertiles/voyager/",
+                    "https://c.basemaps.cartocdn.com/rastertiles/voyager/",
+                    "https://d.basemaps.cartocdn.com/rastertiles/voyager/"
+            },
+            "© OpenStreetMap contributors © CARTO"
+    );
 
     private String emergencyId = "";
     private MapView mapView;
@@ -74,10 +87,10 @@ public class LiveDonorTrackingActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // OSMDroid configuration initialization
+        // OSMDroid configuration initialization with compliant User-Agent & dedicated internal app cache
         Context ctx = getApplicationContext();
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
-        Configuration.getInstance().setUserAgentValue("LifeShareApp/2.0 (Android; OpenStreetMap)");
+        Configuration.getInstance().setUserAgentValue("LifeShare-EmergencyDonorTracking/2.1 (contact: abhijeet.pradhan226@gmail.com; android)");
 
         java.io.File osmBasePath = new java.io.File(ctx.getCacheDir(), "osmdroid");
         java.io.File osmTilesPath = new java.io.File(osmBasePath, "tiles");
@@ -115,7 +128,7 @@ public class LiveDonorTrackingActivity extends AppCompatActivity {
     }
 
     private void setupMap() {
-        mapView.setTileSource(TileSourceFactory.MAPNIK);
+        mapView.setTileSource(CARTO_VOYAGER);
         mapView.setMultiTouchControls(true);
         mapView.setTilesScaledToDpi(true);
         mapView.getZoomController().setVisibility(org.osmdroid.views.CustomZoomButtonsController.Visibility.NEVER);

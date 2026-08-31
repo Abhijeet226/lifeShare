@@ -219,12 +219,27 @@ router.post('/', optionalToken, handleCreateEmergency);
 router.get('/list', async (req, res) => {
   try {
     const requests = await EmergencyRequest.find({
-      status: { $nin: ['CANCELLED', 'EXPIRED', 'COMPLETED', 'DONATION_COMPLETED'] }
+      status: { $nin: ['CANCELLED', 'EXPIRED', 'COMPLETED', 'DONATION_COMPLETED'] },
+      isActive: { $ne: false }
     })
+      .populate('requester', 'accountStatus isDeleted')
       .populate('cityId', 'name stateName location')
       .sort({ createdAt: -1 });
 
-    const formattedRequests = requests.map((r) => {
+    // Exclude any requests created by suspended, blocked, or deleted users, or flagged as fraud
+    const activeRequests = requests.filter((r) => {
+      if (r.requester) {
+        if (['SUSPENDED', 'BLOCKED'].includes(r.requester.accountStatus) || r.requester.isDeleted) {
+          return false;
+        }
+      }
+      if (r.patientName && /fraud/i.test(r.patientName)) {
+        return false;
+      }
+      return true;
+    });
+
+    const formattedRequests = activeRequests.map((r) => {
       const obj = r.toObject ? r.toObject() : { ...r };
       obj.statusDisplay = getEmergencyStatusDisplay(r.status, r.unitsFulfilled || 0, r.unitsRequired || 1);
       return obj;
