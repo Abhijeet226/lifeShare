@@ -21,12 +21,14 @@ fun LifeShareNavHost(
             SplashScreen(
                 onNavigateToHome = {
                     navController.navigate(Screen.MainContainer.route) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
                     }
                 },
                 onNavigateToLogin = {
                     navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             )
@@ -36,7 +38,8 @@ fun LifeShareNavHost(
             LoginScreen(
                 onLoginSuccess = {
                     navController.navigate(Screen.MainContainer.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
                     }
                 },
                 onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) },
@@ -48,7 +51,8 @@ fun LifeShareNavHost(
             SignUpScreen(
                 onSignUpSuccess = {
                     navController.navigate(Screen.MainContainer.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
                     }
                 },
                 onNavigateToLogin = { navController.popBackStack() }

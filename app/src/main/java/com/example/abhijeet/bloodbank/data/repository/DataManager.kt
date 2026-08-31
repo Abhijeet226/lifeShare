@@ -42,10 +42,14 @@ class DataManager private constructor(context: Context) {
         get() = !authToken.isNullOrBlank()
 
     fun saveCurrentUser(user: UserProfile) {
-        val json = gson.toJson(user)
-        prefs.edit().putString(KEY_USER_PROFILE, json).apply()
-        if (!user.token.isNullOrBlank()) {
-            authToken = user.token
+        try {
+            val json = gson.toJson(user)
+            prefs.edit().putString(KEY_USER_PROFILE, json).apply()
+            if (!user.token.isNullOrBlank()) {
+                authToken = user.token
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
