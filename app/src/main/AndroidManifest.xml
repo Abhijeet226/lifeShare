@@ -10,11 +10,9 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
     <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <application
-        android:name=".BloodBankApplication"
+        android:name=".BloodBankApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -23,218 +21,41 @@
         android:usesCleartextTraffic="true"
         android:theme="@style/AppTheme">
 
-        <!-- Lock ZXing QR Camera Scanner to Portrait -->
+        <!-- Single-Activity Compose Host -->
         <activity
-            android:name="com.journeyapps.barcodescanner.CaptureActivity"
-            android:screenOrientation="portrait"
-            tools:replace="android:screenOrientation"
-            android:stateNotNeeded="true" />
-
-        <activity
-            android:name=".SplashActivity"
+            android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/SplashTheme">
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/AppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
 
-        <activity
-            android:name=".MainActivity"
-            android:exported="true" />
-        <activity
-            android:name=".LogInActivity"
-            android:exported="true" />
-        <activity
-            android:name=".SignUpActivity"
-            android:exported="true"
-            android:parentActivityName=".MainActivity" />
-        <activity
-            android:name=".ForgotPassword"
-            android:exported="true"
-            android:parentActivityName=".MainActivity" />
-        <activity
-            android:name=".ProfileActivity"
-            android:exported="true"
-            android:parentActivityName=".LogInActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="lifeshare" android:host="profile" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".UpdatePassword"
-            android:exported="true"
-            android:parentActivityName=".ProfileActivity" />
-        <activity
-            android:name=".UpdateProfile"
-            android:exported="true"
-            android:parentActivityName=".ProfileActivity" />
-        <activity
-            android:name=".SearchActivity"
-            android:exported="true"
-            android:parentActivityName=".LogInActivity" />
-        <activity
-            android:name=".FeedbackActivity"
-            android:exported="true"
-            android:parentActivityName=".LogInActivity" />
-        <activity
-            android:name=".AboutActivity"
-            android:exported="true"
-            android:parentActivityName=".LogInActivity" />
-        <activity
-            android:name=".SettingActivity"
-            android:exported="true"
-            android:parentActivityName=".LogInActivity" />
-
-        <activity
-            android:name=".EmergencyDetailActivity"
-            android:exported="true"
-            android:parentActivityName=".MainActivity">
+            <!-- Deep Linking for Emergency SOS -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="lifeshare" android:host="emergency" />
             </intent-filter>
+
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="lifeshare.odisha.gov.in" android:pathPrefix="/emergency" />
                 <data android:scheme="https" android:host="lifeshare-74c2.onrender.com" android:pathPrefix="/emergency" />
-            </intent-filter>
-        </activity>
-
-        <activity
-            android:name=".EmergencyChatActivity"
-            android:exported="true"
-            android:windowSoftInputMode="adjustResize"
-            android:parentActivityName=".EmergencyDetailActivity">
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="lifeshare" android:host="chat" />
-            </intent-filter>
-        </activity>
-
-        <activity
-            android:name=".LiveDonorTrackingActivity"
-            android:exported="true"
-            android:parentActivityName=".EmergencyDetailActivity">
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="lifeshare" android:host="track" />
-            </intent-filter>
-        </activity>
-
-        <activity
-            android:name=".NotificationCenterActivity"
-            android:exported="false"
-            android:parentActivityName=".LogInActivity" />
-
-        <activity
-            android:name=".DonationHistoryActivity"
-            android:exported="true"
-            android:parentActivityName=".MainActivity">
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="lifeshare" android:host="history" />
-            </intent-filter>
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="lifeshare.odisha.gov.in" android:pathPrefix="/history" />
-                <data android:scheme="https" android:host="lifeshare-74c2.onrender.com" android:pathPrefix="/history" />
-            </intent-filter>
-        </activity>
-
-        <activity
-            android:name=".DonationCertificateActivity"
-            android:exported="true"
-            android:parentActivityName=".DonationHistoryActivity">
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="lifeshare" android:host="certificate" />
-            </intent-filter>
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="lifeshare.odisha.gov.in" android:pathPrefix="/certificate" />
-                <data android:scheme="https" android:host="lifeshare-74c2.onrender.com" android:pathPrefix="/certificate" />
-            </intent-filter>
-        </activity>
-
-        <activity
-            android:name=".CoordinatorVerificationActivity"
-            android:exported="true"
-            android:parentActivityName=".MainActivity">
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="lifeshare" android:host="verify" />
-                <data android:scheme="lifeshare" android:host="coordinator" />
-            </intent-filter>
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="lifeshare.odisha.gov.in" android:pathPrefix="/coordinator" />
-                <data android:scheme="https" android:host="lifeshare-74c2.onrender.com" android:pathPrefix="/coordinator" />
-            </intent-filter>
-        </activity>
-
-        <activity
-            android:name=".AdminDashboardActivity"
-            android:exported="true"
-            android:parentActivityName=".MainActivity">
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="lifeshare" android:host="admin" />
-            </intent-filter>
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="lifeshare.odisha.gov.in" android:pathPrefix="/admin" />
-                <data android:scheme="https" android:host="lifeshare-74c2.onrender.com" android:pathPrefix="/admin" />
             </intent-filter>
         </activity>
 
         <!-- Firebase Cloud Messaging Service -->
         <service
-            android:name=".MyFirebaseMessagingService"
+            android:name=".MyFirebaseService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-
-        <!-- FileProvider for Sharing Certificates and Documents as Images -->
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
-        </provider>
 
     </application>
 
