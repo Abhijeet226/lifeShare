@@ -24,6 +24,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.example.abhijeet.bloodbank.ApiClient;
 import com.example.abhijeet.bloodbank.DataManager;
 import com.example.abhijeet.bloodbank.LogInActivity;
+import com.example.abhijeet.bloodbank.NotificationCenterActivity;
 import com.example.abhijeet.bloodbank.R;
 import com.example.abhijeet.bloodbank.UserProfile;
 import com.google.android.material.button.MaterialButton;
@@ -42,6 +43,8 @@ public class HomeFragment extends Fragment {
     private MaterialButton btnPostSos;
     private View btnShareSosWhatsapp;
     private SwipeRefreshLayout swipeRefresh;
+    private android.widget.FrameLayout btnNotificationBell;
+    private TextView tvNotifBadge;
 
     // Interactive Compatibility Matrix Views
     private TextView chipCompatOneg, chipCompatOpos, chipCompatAneg, chipCompatApos;
@@ -75,6 +78,19 @@ public class HomeFragment extends Fragment {
             tvOperationalTitle = view.findViewById(R.id.tv_home_operational_title);
             tvOperationalSub = view.findViewById(R.id.tv_home_operational_sub);
             btnOpenPortal = view.findViewById(R.id.btn_home_open_portal);
+
+            btnNotificationBell = view.findViewById(R.id.btn_home_notification_bell);
+            tvNotifBadge = view.findViewById(R.id.tv_home_notif_badge);
+
+            if (btnNotificationBell != null) {
+                btnNotificationBell.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(getContext(), NotificationCenterActivity.class);
+                        startActivity(intent);
+                    }
+                });
+            }
 
             initCompatibilityMatrix(view);
 
@@ -168,6 +184,7 @@ public class HomeFragment extends Fragment {
     public void onResume() {
         super.onResume();
         loadUserData();
+        refreshUnreadNotificationCount();
     }
 
     private void loadUserData() {
@@ -541,5 +558,25 @@ public class HomeFragment extends Fragment {
             dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         }
         dialog.show();
+    }
+
+    private void refreshUnreadNotificationCount() {
+        ApiClient.getInstance().getNotifications("ALL", 1, new ApiClient.ApiCallback<ApiClient.NotificationListResponse>() {
+            @Override
+            public void onSuccess(ApiClient.NotificationListResponse response) {
+                if (!isAdded() || getContext() == null) return;
+                if (tvNotifBadge != null) {
+                    if (response != null && response.unreadCount > 0) {
+                        tvNotifBadge.setText(response.unreadCount > 99 ? "99+" : String.valueOf(response.unreadCount));
+                        tvNotifBadge.setVisibility(View.VISIBLE);
+                    } else {
+                        tvNotifBadge.setVisibility(View.GONE);
+                    }
+                }
+            }
+
+            @Override
+            public void onError(String errorMessage) {}
+        });
     }
 }

@@ -15,6 +15,7 @@ const cityRoutes = require('./routes/cities');
 const adminRoutes = require('./routes/admin');
 const campRoutes = require('./routes/camps');
 const chatRoutes = require('./routes/chat');
+const notificationRoutes = require('./routes/notifications');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -29,6 +30,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/donors', donorRoutes);
 app.use('/api/emergency', emergencyRoutes);
 app.use('/api/emergencies', emergencyRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/device-tokens', deviceRoutes);
 app.use('/api/hospitals', hospitalRoutes);
 app.use('/api/bloodbanks', bloodBankRoutes);

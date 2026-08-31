@@ -80,6 +80,45 @@
                     </LinearLayout>
                 </LinearLayout>
 
+                <!-- Notification Bell with Unread Badge -->
+                <FrameLayout
+                    android:id="@+id/btn_home_notification_bell"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="10dp"
+                    android:background="@drawable/badge_available"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:elevation="4dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="Notifications"
+                        android:src="@drawable/ic_notif_bell"
+                        app:tint="@color/colorPrimary" />
+
+                    <!-- Unread Badge Counter Pill -->
+                    <TextView
+                        android:id="@+id/tv_home_notif_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="18dp"
+                        android:layout_gravity="top|end"
+                        android:layout_marginTop="3dp"
+                        android:layout_marginEnd="3dp"
+                        android:background="@drawable/bg_pill_danger"
+                        android:fontFamily="sans-serif-medium"
+                        android:gravity="center"
+                        android:minWidth="18dp"
+                        android:paddingHorizontal="4dp"
+                        android:text="1"
+                        android:textColor="#FFFFFF"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+                </FrameLayout>
+
                 <!-- Blood Shield Badge -->
                 <FrameLayout
                     android:layout_width="52dp"

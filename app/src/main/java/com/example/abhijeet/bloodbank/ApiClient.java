@@ -2315,4 +2315,144 @@ public class ApiClient {
             }
         });
     }
+
+    // ==========================================
+    // NOTIFICATIONS API
+    // ==========================================
+
+    public static class NotificationListResponse {
+        public int totalCount = 0;
+        public int unreadCount = 0;
+        public java.util.Map<String, Integer> channelUnread = new java.util.HashMap<>();
+        public List<InAppNotification> notifications = new ArrayList<>();
+    }
+
+    public void getNotifications(String channel, int page, final ApiCallback<NotificationListResponse> callback) {
+        String path = "/notifications?page=" + page;
+        if (channel != null && !channel.isEmpty() && !"ALL".equalsIgnoreCase(channel)) {
+            path += "&channel=" + channel;
+        }
+
+        get(path, new InternalCallback() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                try {
+                    NotificationListResponse response = new NotificationListResponse();
+                    response.totalCount = optInt(body, "totalCount", 0);
+                    response.unreadCount = optInt(body, "unreadCount", 0);
+
+                    if (body.has("channelUnread") && body.get("channelUnread").isJsonObject()) {
+                        JsonObject cu = body.getAsJsonObject("channelUnread");
+                        for (java.util.Map.Entry<String, JsonElement> entry : cu.entrySet()) {
+                            response.channelUnread.put(entry.getKey(), entry.getValue().getAsInt());
+                        }
+                    }
+
+                    if (body.has("notifications") && body.get("notifications").isJsonArray()) {
+                        JsonArray arr = body.getAsJsonArray("notifications");
+                        for (JsonElement el : arr) {
+                            if (!el.isJsonObject()) continue;
+                            JsonObject obj = el.getAsJsonObject();
+                            InAppNotification item = new InAppNotification();
+                            item.setId(optString(obj, "_id", optString(obj, "id", "")));
+                            item.setTitle(optString(obj, "title", "Notification"));
+                            item.setBody(optString(obj, "body", ""));
+                            item.setType(optString(obj, "type", "SYSTEM"));
+                            item.setChannel(optString(obj, "channel", "UPDATES"));
+                            item.setCollapseKey(optString(obj, "collapseKey", null));
+                            item.setStatus(optString(obj, "status", "ACTIVE"));
+                            item.setRead(obj.has("isRead") && obj.get("isRead").getAsBoolean());
+                            item.setCreatedAt(optString(obj, "createdAt", ""));
+                            item.setUpdatedAt(optString(obj, "updatedAt", ""));
+
+                            if (obj.has("data") && obj.get("data").isJsonObject()) {
+                                JsonObject d = obj.getAsJsonObject("data");
+                                item.setRequestId(optString(d, "requestId", optString(d, "emergencyId", "")));
+                                item.setEmergencyId(optString(d, "emergencyId", ""));
+                                item.setChatRoomId(optString(d, "chatRoomId", ""));
+                                item.setCertificateId(optString(d, "certificateId", ""));
+                                item.setDonorName(optString(d, "donorName", ""));
+                                item.setPatientName(optString(d, "patientName", ""));
+                                item.setHospitalName(optString(d, "hospitalName", optString(d, "hospital", "")));
+                                item.setBloodGroup(optString(d, "bloodGroup", ""));
+                                item.setUnits(optInt(d, "units", 1));
+                            }
+                            response.notifications.add(item);
+                        }
+                    }
+                    callback.onSuccess(response);
+                } catch (Exception e) {
+                    callback.onError("Failed to parse notifications: " + e.getMessage());
+                }
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                callback.onError(errorMessage);
+            }
+        });
+    }
+
+    public void markNotificationRead(String notificationId, final ApiCallback<Integer> callback) {
+        patch("/notifications/" + notificationId + "/read", "{}", new InternalCallback() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                int unread = optInt(body, "unreadCount", 0);
+                callback.onSuccess(unread);
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                callback.onError(errorMessage);
+            }
+        });
+    }
+
+    public void markAllNotificationsRead(String channel, final ApiCallback<Integer> callback) {
+        JsonObject payload = new JsonObject();
+        if (channel != null && !channel.isEmpty()) {
+            payload.addProperty("channel", channel);
+        }
+        patch("/notifications/mark-all-read", payload.toString(), new InternalCallback() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                int unread = optInt(body, "unreadCount", 0);
+                callback.onSuccess(unread);
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                callback.onError(errorMessage);
+            }
+        });
+    }
+
+    public void deleteNotification(String notificationId, final ApiCallback<Integer> callback) {
+        delete("/notifications/" + notificationId, new InternalCallback() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                int unread = optInt(body, "unreadCount", 0);
+                callback.onSuccess(unread);
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                callback.onError(errorMessage);
+            }
+        });
+    }
+
+    public void clearAllNotifications(String channel, final ApiCallback<Void> callback) {
+        delete("/notifications/clear-all", new InternalCallback() {
+            @Override
+            public void onSuccess(JsonObject body) {
+                callback.onSuccess(null);
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                callback.onError(errorMessage);
+            }
+        });
+    }
 }

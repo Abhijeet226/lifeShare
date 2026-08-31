@@ -70,8 +70,13 @@
     <color name="border_subtle">@color/color_outline_variant</color>
     <color name="ripple_light">#1F000000</color>
 
+    <color name="bg_screen_light">@color/color_background</color>
+    <color name="surface_card">@color/color_surface</color>
+    <color name="brand_primary">@color/colorPrimary</color>
+
     <color name="text_primary">@color/color_on_surface</color>
     <color name="text_secondary">@color/color_on_surface_variant</color>
+    <color name="text_tertiary">@color/color_on_surface_variant</color>
     <color name="text_hint">@color/color_on_surface_variant</color>
     <color name="white_greyish">@color/color_surface_container</color>
     <color name="white">#FFFFFF</color>
