@@ -21,8 +21,12 @@ public class NotificationHelper {
 
     public static final String CHANNEL_EMERGENCY_ID = "lifeshare_emergency_sos";
     public static final String CHANNEL_EMERGENCY_NAME = "Emergency SOS Alerts";
+    public static final String CHANNEL_CHAT_ID = "lifeshare_chat";
+    public static final String CHANNEL_CHAT_NAME = "Emergency Coordination Chat";
+    public static final String CHANNEL_CERTIFICATES_ID = "lifeshare_certificates";
+    public static final String CHANNEL_CERTIFICATES_NAME = "Donation Certificates & Karma";
     public static final String CHANNEL_GENERAL_ID = "lifeshare_general";
-    public static final String CHANNEL_GENERAL_NAME = "LifeShare Updates";
+    public static final String CHANNEL_GENERAL_NAME = "Blood Drives & Updates";
 
     private static final String PREF_NOTIFICATIONS = "lifeshare_notif_prefs";
     private static final String KEY_SEEN_SOS_IDS = "seen_sos_ids";
@@ -32,26 +36,49 @@ public class NotificationHelper {
             NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             if (manager == null) return;
 
-            // 1. Emergency Channel (High Priority with Vibration & Red LED)
+            // 1. Emergency Channel (Max Priority with Vibration & Red LED)
             NotificationChannel emergencyChannel = new NotificationChannel(
                     CHANNEL_EMERGENCY_ID,
                     CHANNEL_EMERGENCY_NAME,
                     NotificationManager.IMPORTANCE_HIGH
             );
-            emergencyChannel.setDescription("Instant urgent blood need alerts matching your blood group and Odisha region");
+            emergencyChannel.setDescription("Instant urgent blood need alerts matching your blood group and region");
             emergencyChannel.enableLights(true);
             emergencyChannel.setLightColor(Color.RED);
             emergencyChannel.enableVibration(true);
             emergencyChannel.setVibrationPattern(new long[]{0, 500, 200, 500, 200, 500});
             manager.createNotificationChannel(emergencyChannel);
 
-            // 2. General Channel
+            // 2. Chat Coordination Channel (High Priority with subtle sound/vibrate)
+            NotificationChannel chatChannel = new NotificationChannel(
+                    CHANNEL_CHAT_ID,
+                    CHANNEL_CHAT_NAME,
+                    NotificationManager.IMPORTANCE_HIGH
+            );
+            chatChannel.setDescription("Direct messages and ETA transit updates between donors and coordinators");
+            chatChannel.enableLights(true);
+            chatChannel.setLightColor(Color.BLUE);
+            chatChannel.enableVibration(true);
+            manager.createNotificationChannel(chatChannel);
+
+            // 3. Certificates & Milestones Channel
+            NotificationChannel certChannel = new NotificationChannel(
+                    CHANNEL_CERTIFICATES_ID,
+                    CHANNEL_CERTIFICATES_NAME,
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+            certChannel.setDescription("Verified blood donation certificates, Karma points, and 90-day cooldown alerts");
+            certChannel.enableLights(true);
+            certChannel.setLightColor(Color.GREEN);
+            manager.createNotificationChannel(certChannel);
+
+            // 4. Blood Drives & General Updates Channel
             NotificationChannel generalChannel = new NotificationChannel(
                     CHANNEL_GENERAL_ID,
                     CHANNEL_GENERAL_NAME,
                     NotificationManager.IMPORTANCE_DEFAULT
             );
-            generalChannel.setDescription("LifeShare donor updates and reminders");
+            generalChannel.setDescription("LifeShare voluntary blood donation camp announcements and tips");
             manager.createNotificationChannel(generalChannel);
         }
     }
