@@ -41,13 +41,60 @@
                     android:layout_weight="1"
                     android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/tv_home_greeting"
-                        android:layout_width="wrap_content"
+                    <!-- Greeting Row with Inline Material You Notification Bell -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Welcome back"
-                        android:textColor="#FFCDD2"
-                        android:textSize="14sp" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tv_home_greeting"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Welcome back"
+                            android:textColor="#FFCDD2"
+                            android:textSize="14sp" />
+
+                        <!-- Notification Bell (Material You borderless, no background/elevation) -->
+                        <FrameLayout
+                            android:id="@+id/btn_home_notification_bell"
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:layout_marginStart="8dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:clickable="true"
+                            android:focusable="true">
+
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:layout_gravity="center"
+                                android:contentDescription="Notifications"
+                                android:src="@drawable/ic_notif_bell"
+                                app:tint="#FFFFFF" />
+
+                            <!-- Unread Badge Counter Pill -->
+                            <TextView
+                                android:id="@+id/tv_home_notif_badge"
+                                android:layout_width="wrap_content"
+                                android:layout_height="14dp"
+                                android:layout_gravity="top|end"
+                                android:layout_marginTop="2dp"
+                                android:layout_marginEnd="2dp"
+                                android:background="@drawable/bg_pill_danger"
+                                android:fontFamily="sans-serif-medium"
+                                android:gravity="center"
+                                android:minWidth="14dp"
+                                android:paddingHorizontal="3dp"
+                                android:text="1"
+                                android:textColor="#FFFFFF"
+                                android:textSize="9sp"
+                                android:textStyle="bold"
+                                android:visibility="gone" />
+                        </FrameLayout>
+                    </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="wrap_content"
@@ -80,49 +127,11 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Notification Bell with Unread Badge -->
-                <FrameLayout
-                    android:id="@+id/btn_home_notification_bell"
-                    android:layout_width="52dp"
-                    android:layout_height="52dp"
-                    android:layout_marginEnd="10dp"
-                    android:background="@drawable/badge_available"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:elevation="4dp">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_gravity="center"
-                        android:contentDescription="Notifications"
-                        android:src="@drawable/ic_notif_bell"
-                        app:tint="@color/colorPrimary" />
-
-                    <!-- Unread Badge Counter Pill -->
-                    <TextView
-                        android:id="@+id/tv_home_notif_badge"
-                        android:layout_width="wrap_content"
-                        android:layout_height="18dp"
-                        android:layout_gravity="top|end"
-                        android:layout_marginTop="3dp"
-                        android:layout_marginEnd="3dp"
-                        android:background="@drawable/bg_pill_danger"
-                        android:fontFamily="sans-serif-medium"
-                        android:gravity="center"
-                        android:minWidth="18dp"
-                        android:paddingHorizontal="4dp"
-                        android:text="1"
-                        android:textColor="#FFFFFF"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
-                        android:visibility="gone" />
-                </FrameLayout>
-
                 <!-- Blood Shield Badge -->
                 <FrameLayout
                     android:layout_width="52dp"
                     android:layout_height="52dp"
+                    android:layout_marginStart="12dp"
                     android:background="@drawable/badge_available"
                     android:elevation="4dp">
 
